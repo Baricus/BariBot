@@ -9,11 +9,11 @@ BariBot is, at the moment, little more than a concept.  Minimal (to no) code exi
 - [X] Create a repo (one thing on this list had to be simple)
 - [X] Install ASIO
 - [ ] Implemenent an IRC client class using ASIO tcp sockets
-      - [ ] Open a TCP socket to a given server+port
-	  - [ ] Parse IRC incoming IRC commands
-	  - [ ] Generate outbound IRC commands
-	  - [ ] Properly authenticate with servers and maintain connection
-	  - [ ] Implement Twitch-specific functionality
+  - [ ] Open a TCP socket to a given server+port
+  - [ ] Parse IRC incoming IRC commands
+  - [ ] Generate outbound IRC commands
+  - [ ] Properly authenticate with servers and maintain connection
+  - [ ] Implement Twitch-specific functionality
 - [ ] Create a manager class to handle client instances
 
 ## License
