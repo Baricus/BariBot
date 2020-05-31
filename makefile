@@ -19,7 +19,8 @@
 CXX = g++
 
 # for gdb add -ggdb and remove -03
-CXXFLAGS = -O3 -Wall -Wextra
+# lpthread linked for asio compatability
+CXXFLAGS = -O3 -Wall -Wextra -std=c++11 -lpthread
 BINARY = BariBot
 
 # File structure
@@ -89,10 +90,17 @@ $(BINARY): $(OBJECTS)
 # implicit .cpp file to .o file
 # generates dependencies on an object-to-object
 # basis at compile time using the "-M" flags
-$(OBJECTDIR)%.o: $(SOURCEDIR)%.cpp
+$(OBJECTDIR)%.o: $(SOURCEDIR)%.cpp $(OBJECTDIR) $(DEPENDDIR)
 	@echo
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -MMD -MP -MF $(DEPENDDIR)$*.d -c $< -o $@
+
+# creates folders if needed
+$(OBJECTDIR): 
+	mkdir $(OBJECTDIR)
+
+$(DEPENDDIR):
+	mkdir $(DEPENDDIR)
 
 #include dependancies
 -include $(DEPENDS)
