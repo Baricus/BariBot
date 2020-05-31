@@ -60,7 +60,7 @@ clean:
 	@echo Cleaning up!
 	$(RM) $(BINARY) $(OBJECTDIR)* $(DEPENDDIR)*
 
-build: $(BINARY)
+build: $(OBJECTDIR) $(DEPENDDIR) $(BINARY)
 	@echo
 	@echo Binary is Built!
 
@@ -90,12 +90,12 @@ $(BINARY): $(OBJECTS)
 # implicit .cpp file to .o file
 # generates dependencies on an object-to-object
 # basis at compile time using the "-M" flags
-$(OBJECTDIR)%.o: $(SOURCEDIR)%.cpp $(OBJECTDIR) $(DEPENDDIR)
+$(OBJECTDIR)%.o: $(SOURCEDIR)%.cpp
 	@echo
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -MMD -MP -MF $(DEPENDDIR)$*.d -c $< -o $@
 
-# creates folders if needed
+# makes folders if needed
 $(OBJECTDIR): 
 	mkdir $(OBJECTDIR)
 
