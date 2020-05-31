@@ -22,9 +22,12 @@ CXX = g++
 # lpthread linked for asio compatability
 CXXFLAGS = -O3 -Wall -Wextra -std=c++11 -lpthread
 BINARY = BariBot
+TSTBINARY = TEST.out
 
 # File structure
 SOURCEDIR = ./source/
+TESTDIR = ./tests/
+
 OBJECTDIR = ./objects/
 DEPENDDIR = ./depends/
 
@@ -38,15 +41,23 @@ SOURCES:=$(wildcard $(SOURCEDIR)*.cpp)
 OBJECTS:=$(patsubst $(SOURCEDIR)%.cpp, $(OBJECTDIR)%.o, $(SOURCES))
 DEPENDS:=$(patsubst $(SOURCEDIR)%.cpp, $(DEPENDDIR)%.d, $(SOURCES))
 
+TSTSRCS:=$(wildcard $(TESTDIR)*.cpp)
+TSTOBJS:=$(patsubst $(TESTDIR)%.cpp, $(OBJECTDIR)%.o, $(TSTSRCS))
+TSTDEPS:=$(patsubst $(TESTDIR)%.cpp, $(DEPENDDIR)%.d, $(TSTSRCS))
+
 # ==============================================
 # Phony Rules
 # ==============================================
 
 # out of personal prefference I clear the terminal
 # on most specialized builds (run, gdb, etc)
-run: $(BINARY)
+run: build
 	@clear
 	@./$(BINARY)
+
+test: buildTests
+	@clear
+	@./$(TSTBINARY)
 
 gdb: $(BINARY)
 	@clear
@@ -62,12 +73,19 @@ clean:
 
 build: $(OBJECTDIR) $(DEPENDDIR) $(BINARY)
 	@echo
-	@echo Binary is Built!
+	@echo Binary is built!
+
+buildTests: $(OJBECTDIR) $(DEPENDDIR) $(TSTBINARY)
+	@echo
+	@echo Tests are built!
 
 # Debug rules to output file lists to ensure
 # all files are properly accounted for
 printSources:
 	@echo $(SOURCES)
+
+printTests:
+	@echo $(TSTSRCS)
 
 printObjects:
 	@echo $(OBJECTS)
@@ -75,7 +93,7 @@ printObjects:
 printDepends:
 	@echo $(DEPENDS)
 
-.PHONY: run gdb valgrind clean build printSources printObjects printDepends
+.PHONY: run test gdb valgrind clean build buildTests printSources printObjects printDepends printTests
 
 # ==============================================
 # Compilation rules
@@ -86,6 +104,12 @@ $(BINARY): $(OBJECTS)
 	@echo
 	@echo Linking objects!
 	@$(CXX) $(CXXFLAGS) $+ -o $(BINARY)
+
+# Makes test binary (depends on all c++ files to allow cross refference)
+$(TSTBINARY): $(TSTOBJS) $(OBJECTS)
+	@echo
+	@echo Linking tests!
+	@$(CXX) $(CXXFLAGS) $+ -o $(TSTBINARY)
 
 # implicit .cpp file to .o file
 # generates dependencies on an object-to-object
@@ -104,3 +128,4 @@ $(DEPENDDIR):
 
 #include dependancies
 -include $(DEPENDS)
+-include $(TSTDEPS)

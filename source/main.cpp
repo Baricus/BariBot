@@ -4,9 +4,8 @@
  * BariBot, a Twitch-specific IRC bot.
  *
  */
-#include <asio/io_context.hpp>
+
 #include <iostream>
-#include <asio.hpp>
 
 using std::cout;
 using std::endl;
