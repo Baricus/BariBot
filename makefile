@@ -69,7 +69,7 @@ valgrind: $(BINARY)
 
 clean:
 	@echo Cleaning up!
-	$(RM) $(BINARY) $(OBJECTDIR)* $(DEPENDDIR)*
+	$(RM) $(BINARY) $(TSTBINARY) $(OBJECTDIR)* $(DEPENDDIR)*
 
 build: $(OBJECTDIR) $(DEPENDDIR) $(BINARY)
 	@echo
@@ -105,8 +105,8 @@ $(BINARY): $(OBJECTS)
 	@echo Linking objects!
 	@$(CXX) $(CXXFLAGS) $+ -o $(BINARY)
 
-# Makes test binary (depends on all c++ files to allow cross refference)
-$(TSTBINARY): $(TSTOBJS) $(OBJECTS)
+# Makes test binary (depends on all objects but main)
+$(TSTBINARY): $(TSTOBJS) $(filter-out $(OBJECTDIR)main.o, $(OBJECTS))
 	@echo
 	@echo Linking tests!
 	@$(CXX) $(CXXFLAGS) $+ -o $(TSTBINARY)
@@ -114,10 +114,20 @@ $(TSTBINARY): $(TSTOBJS) $(OBJECTS)
 # implicit .cpp file to .o file
 # generates dependencies on an object-to-object
 # basis at compile time using the "-M" flags
-$(OBJECTDIR)%.o: $(SOURCEDIR)%.cpp
+# 
+# As we have two directories with code, 
+# we create two copies of the rule below,
+# one for each working directory, using eval
+
+define define_compile_rules
+$(OBJECTDIR)%.o: $(1)%.cpp
 	@echo
-	@echo Compiling $<
-	@$(CXX) $(CXXFLAGS) -MMD -MP -MF $(DEPENDDIR)$*.d -c $< -o $@
+	@echo Compiling $$<
+	@$(CXX) $(CXXFLAGS) -MMD -MP -MF $(DEPENDDIR)$$*.d -c $$< -o $$@
+endef
+
+$(eval $(call define_compile_rules, $(SOURCEDIR)))
+$(eval $(call define_compile_rules, $(TESTDIR)))
 
 # makes folders if needed
 $(OBJECTDIR): 
