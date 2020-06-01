@@ -9,6 +9,16 @@
 # If immediate execution is desired, "make run" 
 # is implemented.
 #
+# To build a test suite, "make buildTests" compiles
+# the binary and "make test" runs the program.  
+# All tests are stored in the TESTDIR folder,
+# as designated below.  To ensure that tests can
+# use implementations from the final program, it
+# depends on (and links) all object files that are
+# not "main.o".  Thus, the main function of BariBot
+# MUST be in "main.cpp", as main will be created twice
+# otherwise.
+#
 # For development, a number of phony rules are
 # defined below to automatically run the program
 # with various debugging utilities
@@ -105,7 +115,7 @@ $(BINARY): $(OBJECTS)
 	@echo Linking objects!
 	@$(CXX) $(CXXFLAGS) $+ -o $(BINARY)
 
-# Makes test binary (depends on all objects but main)
+# Makes test binary (depends on all standard objects but main)
 $(TSTBINARY): $(TSTOBJS) $(filter-out $(OBJECTDIR)main.o, $(OBJECTS))
 	@echo
 	@echo Linking tests!
