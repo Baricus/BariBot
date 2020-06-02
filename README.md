@@ -17,6 +17,11 @@ BariBot is, at the moment, little more than a concept.  Minimal (to no) code exi
   - [ ] Handle provided commands
   - [ ] Implement Twitch-specific functionality
 - [ ] Create a manager class to handle client instances
+  - [ ] Generate Twitch OAUTHv2 tokens for instances
+  - [ ] Refresh tokens as needed
+  - [ ] Instantiate instances on demand
+  - [ ] Delete instances as needed
+  - [ ] Accept live configuration
 
 ## License
 [GNU AGPLv3](https://choosealicense.com/licenses/agpl-3.0/)

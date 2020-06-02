@@ -5,7 +5,10 @@
  *
  */
 
+#include <asio/io_context.hpp>
 #include <iostream>
+
+#include "TIRCBot.hpp"
 
 using std::cout;
 using std::endl;
@@ -13,8 +16,12 @@ using std::endl;
 int main()
 {
 	cout << "Initalizing BariBot" << endl;	
+	
+	asio::io_context io;
 
+	Twitch::IRCBot client(io, "irc.chat.twitch.tv", "6667");
 
+	io.run();
 
 	return 0;
 }

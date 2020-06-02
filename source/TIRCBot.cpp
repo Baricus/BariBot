@@ -50,7 +50,7 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
 void Twitch::IRCBot::_connect(string server, string portNum)
 {
 	// DNS lookup
-	auto endpoints = IPresolver.resolve(server, portNum);
+	auto endpoints = IPresolver.resolve(server, portNum, error);
 
 	// attempts to connect
 	asio::connect(TCPsocket, endpoints);
