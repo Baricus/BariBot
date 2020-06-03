@@ -43,7 +43,10 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
 //
 // connect handles connecting to a given server.
 // It is called on construction and if the connection
-// is dropped (in exponential intervals).
+// needs to be re-opened.  
+//
+// connect simply opens the connection.  It does not
+// authenticate, etc.  
 void Twitch::IRCBot::_connect(string server, string portNum)
 {
 	// try catch for connection errors
@@ -80,7 +83,7 @@ void Twitch::IRCBot::_authenticate()
 
 	// writes two lines to the IRC, pass and nickname
 	asio::write(TCPsocket, asio::buffer("PASS oauth:" + Token + "\n"));
-	asio::write(TCPsocket, asio::buffer("NICK baricus\n"));
+	asio::write(TCPsocket, asio::buffer("NICK " + Username + "\n"));
 }
 
 
@@ -105,7 +108,7 @@ void Twitch::IRCBot::start()
 			});
 
 	// TODO authenticate
-	_authenticate();
+	_authenticate();	
 }
 
 // _onMessage
@@ -155,3 +158,15 @@ void Twitch::IRCBot::giveToken(string tok)
 	Token = tok;
 }
 
+// giveUsername
+//
+// giveUsername is a "set" function to provide
+// the instance with it's login username.
+//
+// This is used to authenticate with Twitch servers
+void Twitch::IRCBot::giveUsername(string user)
+{
+	// TODO Error checking (not really necessary, but helpful)
+	
+	Username = user;
+}

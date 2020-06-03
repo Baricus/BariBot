@@ -11,6 +11,7 @@
 #include "TIRCBot.hpp"
 
 using std::cout;
+using std::cin;
 using std::endl;
 
 int main()
@@ -20,7 +21,14 @@ int main()
 	asio::io_context io;
 
 	Twitch::IRCBot client(io, "irc.chat.twitch.tv", "6667");
-	client.giveToken("[REDACTED]");
+
+	// temporary way to load token and username until handler is created
+	string token, usr;
+	cin >> token;
+	cin >> usr;
+
+	client.giveToken(token);
+	client.giveUsername(usr);
 	client.start();
 
 	io.run();

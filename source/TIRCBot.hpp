@@ -43,8 +43,9 @@ namespace Twitch
 			asio::dynamic_string_buffer
 			<string::value_type, string::traits_type, string::allocator_type> inBuffer;
 
-			// Auth Token (stored for re-connection)
+			// Auth Token and username (stored in case of reconnection
 			string Token;
+			string Username;
 
 			// private functions
 			
@@ -62,8 +63,9 @@ namespace Twitch
 			// starts the event handle loop
 			void start();
 
+			// Setup functions that must be run before calling start
 			// Provides a token to the bot for authentification.
-			// Must be done before calling start
 			void giveToken(string tok);
+			void giveUsername(string user);
 	};
 }
