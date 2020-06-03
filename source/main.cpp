@@ -20,6 +20,8 @@ int main()
 	asio::io_context io;
 
 	Twitch::IRCBot client(io, "irc.chat.twitch.tv", "6667");
+	client.giveToken("[REDACTED]");
+	client.start();
 
 	io.run();
 

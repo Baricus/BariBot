@@ -13,12 +13,13 @@ BariBot is, at the moment, little more than a concept.  Minimal (to no) code exi
   - [X] Open a TCP socket to a given server+port
   - [ ] Parse incoming IRC commands
   - [ ] Generate outbound IRC commands
-  - [ ] Properly authenticate with servers and maintain connection
-  - [ ] Handle provided commands
-  - [ ] Implement Twitch-specific functionality
+  - [X] Properly authenticate with Twitch servers
+  - [ ] Maintain connection with Twitch servers (ping pong)
+  - [ ] Handle user commands
+  - [ ] Implement Twitch-specific IRC functionality
 - [ ] Create a manager class to handle client instances
-  - [ ] Generate Twitch OAUTHv2 tokens for instances
-  - [ ] Refresh tokens as needed
+  - [ ] Refresh implicit tokens for instances
+  - [ ] Generate client credentials for non IRC api calls 
   - [ ] Instantiate instances on demand
   - [ ] Delete instances as needed
   - [ ] Accept live configuration

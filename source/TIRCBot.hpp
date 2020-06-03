@@ -21,9 +21,12 @@ namespace Twitch
 	class IRCBot
 	{
 		private:
+			// Socket and other network objects
+			
 			// connection data
 			string Server, PortNumber;
 
+			// strand for handle execution (currently unneeded)
 			asio::strand<asio::io_context::executor_type> _Strand;
 
 			// resolver
@@ -40,18 +43,27 @@ namespace Twitch
 			asio::dynamic_string_buffer
 			<string::value_type, string::traits_type, string::allocator_type> inBuffer;
 
+			// Auth Token (stored for re-connection)
+			string Token;
 
 			// private functions
+			
+			// Connection related functions
 			void _connect(string serv, string portNum);
-			void _start();
-			void _onMessage(const asio::error_code &e, std::size_t size);
+			void _authenticate();
 
+			// message recieve handler
+			void _onMessage(const asio::error_code &e, std::size_t size);
+			
 		public:
+			// constructor
 			IRCBot(asio::io_context &context, string server, string portNum);
 
+			// starts the event handle loop
+			void start();
 
-			
-
-
+			// Provides a token to the bot for authentification.
+			// Must be done before calling start
+			void giveToken(string tok);
 	};
 }
