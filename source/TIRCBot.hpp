@@ -5,6 +5,9 @@
  * to be directed towards Twitch serevers
  */
 
+#ifndef TWITCH_TIRCBOT
+#define TWITCH_TIRCBOT
+
 #include <asio/buffer.hpp>
 #include <asio/io_context.hpp>
 #include <string>
@@ -69,3 +72,4 @@ namespace Twitch
 			void giveUsername(string user);
 	};
 }
+#endif

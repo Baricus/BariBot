@@ -20,6 +20,18 @@
 
 #include <iostream>
 
+
+/* setAppCreds
+ *
+ * a simple setter function for the ClientID and clientSecret
+ *
+ */
+void Twitch::Overseer::setAppCreds(std::string id, std::string secret)
+{
+	ClientID = id;
+	ClientSecret = secret;
+}
+
 /* _renewToken
  *
  * renewToken takes a token and replaces it with
@@ -46,10 +58,12 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 	
 	session.sendRequest(request);
 
+	response.write(std::cout);
+
 	// if we recieved JSON back (an OK request)
 	if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK)
 	{
-		response.write(std::cout);
+
 
 		return true;
 	}
@@ -57,3 +71,36 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 	// otherwise, the request failed
 	return false;
 }
+
+
+/* createClientInstance
+ *
+ * createInstance creates a new TwitchIRC client instance
+ * and binds it to the current token to return.  
+ *
+ * If the token is invalid, the client throws an authentication error
+ * which is caught here.  This prompts a token renewal and a
+ * retry.
+ */
+std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstance(
+		Twitch::token tok, 
+		std::string server,
+		std::string portN
+		)
+{
+	Twitch::IRCBot *client = new Twitch::IRCBot(Context, server, portN);
+
+	// TODO temporary fix - just refresh the token
+	_renewToken(tok);
+
+	// authenticates the client
+	client->giveToken(tok.accessToken);
+	client->giveUsername(tok.username);
+
+	// TODO - try catch for token renew
+	client->start();
+	
+	// have a working cleint and token so return
+	return std::make_pair(tok, client);
+}
+

@@ -62,7 +62,9 @@ void Twitch::IRCBot::_connect(string server, string portNum)
 	}
 	catch (asio::system_error &e)
 	{
-		// for now, throw the error
+		// TODO connect repeatedly on a falloff timer
+
+		// for now, throw the error upstream
 		throw e;
 	}
 }

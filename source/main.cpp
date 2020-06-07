@@ -5,34 +5,39 @@
  *
  */
 
+
+
 #include <asio/io_context.hpp>
 #include <iostream>
 
 
+#include "InstanceOverseer.hpp"
 #include "TIRCBot.hpp"
+#include "token.hpp"
 
-using std::cout;
-using std::cin;
-using std::endl;
 
 int main()
 {
-	cout << "Initalizing BariBot" << endl;	
+	using std::cout;
+	using std::cin;
+	using std::endl;
 	
-	asio::io_context io;
+	cout << "Initalizing BariBot" << endl;	
 
-	Twitch::IRCBot client(io, "irc.chat.twitch.tv", "6667");
+	// creates the overseer
+	Twitch::Overseer BariBot;
 
-	// temporary way to load token and username until handler is created
-	string token, usr;
-	cin >> token;
-	cin >> usr;
+	// set's client ID and secret
+	BariBot.setAppCreds("", "");
 
-	client.giveToken(token);
-	client.giveUsername(usr);
-	client.start();
+	// creates the old token for this test
+	Twitch::token tok;
+	tok.accessToken = "";
+	tok.refreshToken = "";
+	tok.scopes = "";
 
-	io.run();
+	auto temp = BariBot.createClientInstance(tok, "irc.chat.twitch.tv", "6667");
+
 
 	return 0;
 }
