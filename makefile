@@ -28,9 +28,15 @@
 # ==============================================
 CXX = g++
 
+CXXFLAGS = -O3 -Wall -Wextra -std=c++11
+
 # for gdb add -ggdb and remove -03
 # lpthread linked for asio compatability
-CXXFLAGS = -O3 -Wall -Wextra -std=c++11 -lpthread
+# lPoco* for HTTP post requests
+CXXLIBS  = -lpthread \
+		   -lPocoNet -lPocoFoundation -lPocoNetSSL \
+		   -lPocoJSON \
+
 BINARY = BariBot
 TSTBINARY = TEST.out
 
@@ -113,13 +119,13 @@ printDepends:
 $(BINARY): $(OBJECTS)
 	@echo
 	@echo Linking objects!
-	@$(CXX) $(CXXFLAGS) $+ -o $(BINARY)
+	@$(CXX) $(CXXFLAGS) $(CXXLIBS) $+ -o $(BINARY)
 
 # Makes test binary (depends on all standard objects but main)
 $(TSTBINARY): $(TSTOBJS) $(filter-out $(OBJECTDIR)main.o, $(OBJECTS))
 	@echo
 	@echo Linking tests!
-	@$(CXX) $(CXXFLAGS) $+ -o $(TSTBINARY)
+	@$(CXX) $(CXXFLAGS) $(CXXLIBS) $+ -o $(TSTBINARY)
 
 # implicit .cpp file to .o file
 # generates dependencies on an object-to-object

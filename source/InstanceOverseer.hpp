@@ -13,16 +13,26 @@
  */
 
 
+#include <map>
+
+#include "token.hpp"
+#include "TIRCBot.hpp"
+
 namespace Twitch
 {
 	class Overseer
 	{
 		private:
+			// a map of tokens to IRCclients to enable easy correlation
+			std::map<Twitch::token, Twitch::IRCBot> clients;
 
-
+			// client ID and secret
+			std::string ClientID, ClientSecret;			
+	
+			// a function to renew those tokens as needed (to pass to clients)
+			bool _renewToken(Twitch::token &);
 
 		public:
-
 			
 	};
 }
