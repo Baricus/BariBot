@@ -21,10 +21,27 @@
 #include <iostream>
 
 
+/* setContext
+ *
+ * setContext turns on and off the IO context.  
+ * It creates X number threads of when applied.
+ *
+ * If threads is zero, it turns off the context
+ *
+ * It returns true assuming everything happens
+ *
+ * TODO - To be implemented
+ */
+bool Twitch::Overseer::setContext(int count)
+{
+	Context.run();
+
+	return true;
+}
+
 /* setAppCreds
  *
  * a simple setter function for the ClientID and clientSecret
- *
  */
 void Twitch::Overseer::setAppCreds(std::string id, std::string secret)
 {
@@ -55,9 +72,8 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 	Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_POST, renew.getPath());
 
 	Poco::Net::HTTPResponse response;
-	
 	session.sendRequest(request);
-
+	session.receiveResponse(response);
 	response.write(std::cout);
 
 	// if we recieved JSON back (an OK request)
@@ -103,4 +119,3 @@ std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstanc
 	// have a working cleint and token so return
 	return std::make_pair(tok, client);
 }
-

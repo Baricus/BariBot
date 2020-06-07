@@ -137,6 +137,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// temporary output
 	cout << "Line: " << line << endl;
 
+
 	// resets handler	
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 
 			[this](const asio::error_code &e, size_t size)

@@ -39,10 +39,8 @@ namespace Twitch
 			bool _renewToken(Twitch::token &);
 
 		public:			
-			
 			// function to set ClientID and Client Secret
 			void setAppCreds(std::string ID, std::string secret);
-
 
 			// function to create a new instance from a token.
 			// Returns a pair for easy insertion into the map
@@ -50,6 +48,8 @@ namespace Twitch
 			// May become a private function or change return type to just the token
 			std::pair<Twitch::token, Twitch::IRCBot *> createClientInstance(Twitch::token tok, std::string server, std::string port);
 		
+			// function to toggle context
+			bool setContext(int beOn);
 	};
 }
 

@@ -34,10 +34,15 @@ int main()
 	Twitch::token tok;
 	tok.accessToken = "";
 	tok.refreshToken = "";
-	tok.scopes = "";
+	
+	tok.username = "Baricus";
+
+	tok.scopes = "unused at pres";
 
 	auto temp = BariBot.createClientInstance(tok, "irc.chat.twitch.tv", "6667");
 
+	// starts bot
+	BariBot.setContext(1);
 
 	return 0;
 }
