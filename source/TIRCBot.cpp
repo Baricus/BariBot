@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 
+//TODO - remove
 using std::cout;
 using std::endl;
 
@@ -31,9 +32,6 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
 		IPresolver(context), TCPsocket(context),
 		inString(), inBuffer(inString)
 {
-	// sets token to "NULL" to easily check if invalid
-	Token = "NULL";
-
 	// connects to server (if successful, updates flag)
 	_connect(Server, PortNumber);
 }
@@ -76,13 +74,6 @@ void Twitch::IRCBot::_connect(string server, string portNum)
 // server to properly establish the connection
 void Twitch::IRCBot::_authenticate()
 {
-	// close connection if token is null
-	if (Token == "NULL")
-	{
-		TCPsocket.close();
-		return;
-	}
-
 	// writes two lines to the IRC, pass and nickname
 	asio::write(TCPsocket, asio::buffer("PASS oauth:" + Token + "\n"));
 	asio::write(TCPsocket, asio::buffer("NICK " + Username + "\n"));

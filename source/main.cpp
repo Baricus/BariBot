@@ -6,7 +6,6 @@
  */
 
 
-
 #include <asio/io_context.hpp>
 #include <iostream>
 
@@ -41,7 +40,7 @@ int main()
 
 	auto temp = BariBot.createClientInstance(tok, "irc.chat.twitch.tv", "6667");
 
-	// starts bot
+	// starts bot with one thread
 	BariBot.setContext(1);
 
 	return 0;
