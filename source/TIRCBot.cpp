@@ -6,12 +6,21 @@
 
 #include "TIRCBot.hpp"
 
-// extra includes for error reporting
+// extra includes are unecessary but auto generated
+#include <asio/basic_waitable_timer.hpp>
+#include <asio/bind_executor.hpp>
 #include <asio/buffer.hpp>
 #include <asio/error_code.hpp>
 #include <asio/read_until.hpp>
+#include <asio/steady_timer.hpp>
+
+// regex for parsing
+#include <regex>
+
 #include <iostream>
 #include <fstream>
+
+
 
 //TODO - remove
 using std::cout;
@@ -27,7 +36,8 @@ using std::endl;
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
 Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
-	:	Server(serv), PortNumber(portNum),
+	:	Context(context),
+		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
 		IPresolver(context), TCPsocket(context),
 		inString(), inBuffer(inString)
@@ -44,8 +54,11 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
 // needs to be re-opened.  
 //
 // connect simply opens the connection.  It does not
-// authenticate, etc.  
-void Twitch::IRCBot::_connect(string server, string portNum)
+// authenticate, etc. 
+//
+// seconds is used to delay repeated reconnects using
+// asio async_wait 
+void Twitch::IRCBot::_connect(string server, string portNum, long seconds)
 {
 	// try catch for connection errors
 	try
@@ -60,10 +73,18 @@ void Twitch::IRCBot::_connect(string server, string portNum)
 	}
 	catch (asio::system_error &e)
 	{
-		// TODO connect repeatedly on a falloff timer
+		// if we hit an arbitrary limit on time, just throw
+		if (seconds > 1000)
+			throw e;
 
-		// for now, throw the error upstream
-		throw e;
+		// otherwise, connect repeatedly on a falloff timer
+		// (we bind it to the _strand to ensure we can't read, etc)
+		asio::steady_timer timer(Context, asio::chrono::seconds(seconds));
+		timer.async_wait(asio::bind_executor(_Strand, 
+				[server, portNum, seconds, this](const asio::error_code &error)
+				{
+					this->_connect(server, portNum, seconds * seconds);
+				}));
 	}
 }
 
@@ -97,7 +118,7 @@ void Twitch::IRCBot::start()
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 
 			[this](const asio::error_code &e, size_t size)
 			{
-				_onMessage(e, size);
+				this->_onMessage(e, size);
 			});
 
 	// TODO authenticate
@@ -128,12 +149,14 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// temporary output
 	cout << "Line: " << line << endl;
 
+	// TODO parce IRC messages
+
 
 	// resets handler	
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 
 			[this](const asio::error_code &e, size_t size)
 			{
-				_onMessage(e, size);
+				this->_onMessage(e, size);
 			});
 }
 

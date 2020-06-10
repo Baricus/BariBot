@@ -25,7 +25,10 @@ namespace Twitch
 	{
 		private:
 			// Socket and other network objects
-			
+		
+			// io context refference
+			asio::io_context &Context;
+
 			// connection data
 			string Server, PortNumber;
 
@@ -53,7 +56,7 @@ namespace Twitch
 			// private functions
 			
 			// Connection related functions
-			void _connect(string serv, string portNum);
+			void _connect(string server, string portNum, long seconds=2);
 			void _authenticate();
 
 			// message recieve handler
