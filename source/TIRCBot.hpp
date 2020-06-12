@@ -38,7 +38,7 @@ namespace Twitch
 			// resolver
 			asio::ip::tcp::resolver IPresolver;
 
-			//basic stream socket
+			//basic stream socket Pointer
 			asio::ip::tcp::socket TCPsocket;
 
 			//ASIO error system
@@ -56,7 +56,7 @@ namespace Twitch
 			// private functions
 			
 			// Connection related functions
-			void _connect(string server, string portNum, long seconds=2);
+			void _connect(long delay=0);
 			void _authenticate();
 
 			// message recieve handler

@@ -38,7 +38,9 @@ int main()
 
 	tok.scopes = "unused at pres";
 
-	auto temp = BariBot.createClientInstance(tok, "irc.chat.twitch.tv", "6667");
+	auto temp = BariBot.createClientInstance(tok, "google.com", "6667");
+
+	cout << "starting context" << endl;
 
 	// starts bot with one thread
 	BariBot.setContext(1);
