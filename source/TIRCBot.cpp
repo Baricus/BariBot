@@ -147,13 +147,16 @@ void Twitch::IRCBot::start()
 // accordingly, usually by calling other functions
 void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 {
+	// if we have an error, the socket is likely closed so we'll need a new one
 	if (e)
 	{
+		// TODO - remove
 		cout << "ERROR: " << e.message() << " | " << e.value() << endl;
 		
 		// ERR OUT, so shut down
 		TCPsocket.close();
 
+		// TODO - throw proper error upstream
 		return;
 	}
 
@@ -165,7 +168,24 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	cout << "Line: " << line << endl;
 
 	// TODO parce IRC messages
-
+	
+	// a regex expression to parse an IRC command into a smatch.
+	//
+	// This expression is based on a command by Garrett W. 
+	// which can be found at https://regexr.com/39dn4
+	//
+	// This modified version (mainly to account for tags) is
+	// located at https://regexr.com/56llm
+	//
+	// The smatch's capture groups are as follows
+	// [0] - Entire command
+	// [1] - All tags supplied (if any)
+	// [2] - Prefix (if any)
+	// [3] - Command (all caps or number if correct form; this is more general)
+	// [4] - Parameters
+	// [5] - Optional final parameter
+	const static std::regex IRCLine
+		(R"(^(?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +(?!:)(.+?))?(?: +:(.+))?$)");	
 
 	// resets handler	
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 

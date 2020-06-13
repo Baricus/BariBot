@@ -49,7 +49,7 @@ namespace Twitch
 			asio::dynamic_string_buffer
 			<string::value_type, string::traits_type, string::allocator_type> inBuffer;
 
-			// Auth Token and username (stored in case of reconnection
+			// Auth Token and username (stored in case of reconnection)
 			string Token;
 			string Username;
 
