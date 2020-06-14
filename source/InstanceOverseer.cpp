@@ -110,7 +110,7 @@ std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstanc
 	Twitch::IRCBot *client = new Twitch::IRCBot(Context, server, portN);
 
 	// TODO temporary fix - just refresh the token
-	_renewToken(tok);
+	//_renewToken(tok);
 
 	// authenticates the client
 	client->giveToken(tok.accessToken);

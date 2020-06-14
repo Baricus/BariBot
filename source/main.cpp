@@ -31,8 +31,8 @@ int main()
 
 	// creates the old token for this test
 	Twitch::token tok;
-	tok.accessToken = "";
-	tok.refreshToken = "";
+	tok.accessToken = "notright";
+	tok.refreshToken = "definiteilynot";
 	
 	tok.username = "Baricus";
 

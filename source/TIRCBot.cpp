@@ -19,6 +19,7 @@
 #include <asio/write.hpp>
 #include <regex>
 
+// file input output and cout ( cout eventually will be removed in favor of individual logs)
 #include <iostream>
 #include <fstream>
 
@@ -116,28 +117,17 @@ void Twitch::IRCBot::_authenticate()
 // to handle commands
 void Twitch::IRCBot::start()
 {
-	try
-	{
-		// TODO log
-
-		// connect to server
-		_connect();
-
-		// binds onMessage to the strand as a handler for the first read
-		asio::async_read_until(TCPsocket, inBuffer, '\n', 
+	// binds onMessage to the strand as a handler for the first read
+	asio::async_read_until(TCPsocket, inBuffer, '\n', 
+			asio::bind_executor(_Strand,
 				[this](const asio::error_code &e, size_t size)
 				{
-				this->_onMessage(e, size);
-				});
+					this->_onMessage(e, size);
+				}
+				));
 
-		// TODO authenticate
-		_authenticate();	
-	}
-	// try catch to reconnect
-	catch (std::system_error &e)
-	{
-		std::cout << "start catch: " << e.what() << endl;
-	}
+	_authenticate();	
+
 }
 
 // _onMessage
@@ -160,16 +150,14 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 		return;
 	}
 
-	// gets line from buffer and clears it
-	string line = inString.substr(0, size-1);
+	// gets line from buffer (keeping '\n') and clears it
+	string line;
+	line = inString.substr(0, size);
 	inString.erase(0, size);
 
-	// temporary output
-	cout << "Line: " << line << endl;
-
-	// TODO parce IRC messages
-	
-	// a regex expression to parse an IRC command into a smatch.
+	// A regex expression to parse an IRC command into a smatch.  
+	// The expression is in EMCAscript regex and is set to prefer
+	// fast match times over memory/compile time (since it's static).
 	//
 	// This expression is based on a command by Garrett W. 
 	// which can be found at https://regexr.com/39dn4
@@ -177,22 +165,50 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// This modified version (mainly to account for tags) is
 	// located at https://regexr.com/56llm
 	//
+	// Due to errors in C++ 11 EMCAregex, the ^ and $ assertions
+	// fail to properly function here.  Thus, we kept the \n on the
+	// end of the string to create a functionally equivalent line.  
+	// This could be fixed in C++17 with the multiline flag but,
+	// as I already decided to stick with '11, we'll just deal with it.
+	//
 	// The smatch's capture groups are as follows
-	// [0] - Entire command
+	// [0] - Entire command (0-1)@TAGS (0-1):PREFIX COMMAND PARAMETERS :FINAL PARAMETER
 	// [1] - All tags supplied (if any)
 	// [2] - Prefix (if any)
 	// [3] - Command (all caps or number if correct form; this is more general)
 	// [4] - Parameters
 	// [5] - Optional final parameter
 	const static std::regex IRCLine
-		(R"(^(?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +(?!:)(.+?))?(?: +:(.+))?$)");	
+		(R"Delim((?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +([^\n]+?)(?!:))?(?: :([^\n]+))?\n)Delim", 
+		 std::regex_constants::ECMAScript | std::regex_constants::optimize);	
+	
+	// test the regex against the recieved line
+	std::smatch sm;
+	if (!std::regex_match(line, sm, IRCLine))
+	{
+		// we didn't match the line, so we discard it
+		cout << "DISCARDED LINE: " << line;
+		// TODO LOG FAILED PARSINGS
+	}
+	else // we have a good line
+	{
+		cout << "GOOD LINE: " << sm[0];
+		cout << "Separated: " << sm[1] << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
+	
+		// Before we get to bot commands, we have to handle IRC commands
+		// (not all messages will have prefixes)
+		
+
+	}
 
 	// resets handler	
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 
-			[this](const asio::error_code &e, size_t size)
-			{
-				this->_onMessage(e, size);
-			});
+			asio::bind_executor(_Strand,
+				[this](const asio::error_code &e, size_t size)
+				{
+					this->_onMessage(e, size);
+				}
+				));
 }
 
 
