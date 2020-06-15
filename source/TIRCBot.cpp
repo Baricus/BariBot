@@ -19,7 +19,7 @@
 #include <asio/write.hpp>
 #include <regex>
 
-// file input output and cout ( cout eventually will be removed in favor of individual logs)
+// file input output and cout (cout eventually will be removed in favor of individual logs)
 #include <iostream>
 #include <fstream>
 
@@ -38,14 +38,17 @@ using std::endl;
 //
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
-Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
+Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum,
+		std::map<std::string, bool(*)(std::smatch &)> &CommandHandler)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
 		IPresolver(context), TCPsocket(context),
 		inString(), inBuffer(inString)
 {
-	// connects to server (if successful, updates flag)
+	// setup handlers
+	this->HandleCommand = CommandHandler;
+
 	_connect();
 }
 
@@ -74,8 +77,6 @@ void Twitch::IRCBot::_connect(long delay)
 	}
 	catch(...)
 	{
-		cout << "_connect catch retry" << endl;
-
 		// resets the socket
 		TCPsocket.close();
 		TCPsocket = asio::ip::tcp::socket(Context);
@@ -165,7 +166,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// This modified version (mainly to account for tags) is
 	// located at https://regexr.com/56llm
 	//
-	// Due to errors in C++ 11 EMCAregex, the ^ and $ assertions
+	// Due to errors in C++11 EMCAregex, the ^ and $ assertions
 	// fail to properly function here.  Thus, we kept the \n on the
 	// end of the string to create a functionally equivalent line.  
 	// This could be fixed in C++17 with the multiline flag but,
@@ -196,9 +197,9 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 		cout << "Separated: " << sm[1] << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
 	
 		// Before we get to bot commands, we have to handle IRC commands
-		// (not all messages will have prefixes)
-		
-
+		// (not all messages are user messages)
+		// Luckily, we don't care too much about the entire standard, just
+		// the portions useful for Twitch IRC
 	}
 
 	// resets handler	
