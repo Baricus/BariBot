@@ -22,8 +22,10 @@
 #include <Poco/URI.h>
 #include <Poco/JSON/Parser.h>
 
+#include <cstdlib>
 #include <iostream>
 #include <istream>
+
 
 /* _renewToken
  *
@@ -81,6 +83,20 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 }
 
 
+/* ~Overseer (destructor)
+ *
+ * Deletes every IRCBot instance in the map
+ *
+ */
+Twitch::Overseer::~Overseer()
+{
+	for (auto pair : Clients)
+	{
+		delete pair.second;
+	}
+}
+
+
 /* setAppCreds
  *
  * a simple setter function for the ClientID and clientSecret
@@ -107,8 +123,12 @@ std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstanc
 		std::string portN
 		)
 {
-	Twitch::IRCBot *client = new Twitch::IRCBot(Context, server, portN);
+	
+	Twitch::IRCBot *client; 
 
+	// creates a client instance
+	client = new Twitch::IRCBot(Context, server, portN, MasterIRCCorrelator);
+	
 	// TODO temporary fix - just refresh the token
 	//_renewToken(tok);
 
@@ -133,11 +153,18 @@ std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstanc
  *
  * It returns true assuming everything happens
  *
- * TODO - To be implemented
+ * TODO - REMOVE FROM IMPLEMENTATION
  */
 bool Twitch::Overseer::setContext(int count)
 {
+	try
+	{
 	Context.run();
+	}
+	catch(std::runtime_error &e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 
 	return true;
 }

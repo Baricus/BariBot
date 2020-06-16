@@ -27,9 +27,10 @@ namespace Twitch
 	{
 		// all booleans about what to "do" after this command
 		
-		bool shouldOutput;  // should the bot output a string
+		bool shouldOutput = false;  // should the bot output a string
+		bool shouldClose = false;   // should the bot close the socket
 
-		bool shouldClose;   // should the bot close the socket
+		// Output storage
 
 		std::string output; // a string to output if needed
 	};

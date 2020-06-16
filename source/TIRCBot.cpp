@@ -38,15 +38,15 @@ using std::endl;
 //
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
-Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
+Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum,
+		IRCCorrelator &IRCCor)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
 		IPresolver(context), TCPsocket(context),
-		inString(), inBuffer(inString)
+		inString(), inBuffer(inString),
+		IRC(IRCCor)
 {
-	// setup handlers
-
 	_connect();
 }
 
@@ -100,8 +100,8 @@ void Twitch::IRCBot::_connect(long delay)
 void Twitch::IRCBot::_authenticate()
 {
 	// writes two lines to the IRC, pass and nickname
-	asio::write(TCPsocket, asio::buffer("PASS oauth:" + Token + "\n"));
-	asio::write(TCPsocket, asio::buffer("NICK " + Username + "\n"));
+	asio::write(TCPsocket, asio::buffer("PASS oauth:" + Token + "\r\n"));
+	asio::write(TCPsocket, asio::buffer("NICK " + Username + "\r\n"));
 }
 
 
@@ -178,7 +178,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// [4] - Parameters
 	// [5] - Optional final parameter
 	const static std::regex IRCLine
-		(R"Delim((?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +([^\n]+?)(?!:))?(?: :([^\n]+))?\n)Delim", 
+		(R"Delim((?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +([^\n\r]+?)(?!:))?(?: :([^\n\r]+))?\r\n)Delim", 
 		 std::regex_constants::ECMAScript | std::regex_constants::optimize);	
 	
 	// test the regex against the recieved line
@@ -193,11 +193,39 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	{
 		cout << "GOOD LINE: " << sm[0];
 		cout << "Separated: " << sm[1] << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
-	
-		// Before we get to bot commands, we have to handle IRC commands
-		// (not all messages are user messages)
-		// Luckily, we don't care too much about the entire standard, just
-		// the portions useful for Twitch IRC
+
+		// to handle commands, we use the IRC Correlator to find the proper function
+		auto iter = IRC.SFM.find(sm[3].str());
+
+		// if we can't find the command
+		if (iter == IRC.SFM.end())
+		{
+			// TODO - log failed IRC command
+		}
+		else //else, we got our response
+		{
+			// call the function related to the command
+			IRCResults result;
+			if (!iter->second(sm, result))
+			{
+				// TODO - log failure
+			}
+			else
+			{
+				// TODO - log success and result
+
+				// analyze the result to know what to output, etc
+				if (result.shouldOutput)
+				{
+					asio::write(TCPsocket, asio::buffer(result.output));
+				}
+
+				if (result.shouldClose)
+				{
+					// Do I want this?	
+				}
+			}
+		}
 	}
 
 	// resets handler	
@@ -224,6 +252,7 @@ void Twitch::IRCBot::giveToken(string tok)
 
 	Token = tok;
 }
+
 
 // giveUsername
 //

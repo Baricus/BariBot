@@ -21,6 +21,8 @@
 #include "token.hpp"
 #include "TIRCBot.hpp"
 
+#include "IRCCorrelator.hpp"
+
 namespace Twitch
 {
 	class Overseer
@@ -33,12 +35,18 @@ namespace Twitch
 			std::map<Twitch::token, Twitch::IRCBot *> Clients;
 
 			// client ID and secret
-			std::string ClientID, ClientSecret;			
+			std::string ClientID, ClientSecret;
+
+			// a helper to pass to ALL instances (unmodified) to handle each IRC command
+			IRCCorrelator MasterIRCCorrelator;
 	
 			// a function to renew those tokens as needed (to pass to clients)
 			bool _renewToken(Twitch::token &);
 
 		public:			
+			// destructor needed
+			virtual ~Overseer();
+
 			// function to set ClientID and Client Secret
 			void setAppCreds(std::string ID, std::string secret);
 

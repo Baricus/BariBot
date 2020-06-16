@@ -20,6 +20,9 @@
 
 #include <asio.hpp>
 
+// analysis of IRC commands
+#include "IRCCorrelator.hpp"
+#include "IRCResults.hpp"
 
 using std::string;
 using std::vector;
@@ -60,6 +63,9 @@ namespace Twitch
 			string Token;
 			string Username;
 
+			// a helper that correlates IRC commands to functions
+			IRCCorrelator &IRC;
+
 			// private functions
 			
 			// Connection related functions
@@ -72,7 +78,8 @@ namespace Twitch
 			
 		public:
 			// constructor
-			IRCBot(asio::io_context &context, string server, string portNum);
+			IRCBot(asio::io_context &context, string server, string portNum,
+					IRCCorrelator &IRCCor);
 
 			// starts the event handle loop
 			void start();
