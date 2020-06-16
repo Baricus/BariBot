@@ -38,8 +38,7 @@ using std::endl;
 //
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
-Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum,
-		std::map<std::string, bool(*)(std::smatch &)> &CommandHandler)
+Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
@@ -47,7 +46,6 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum,
 		inString(), inBuffer(inString)
 {
 	// setup handlers
-	this->HandleCommand = CommandHandler;
 
 	_connect();
 }

@@ -69,18 +69,10 @@ namespace Twitch
 			// message recieve handler
 			void _onMessage(const asio::error_code &e, std::size_t size);
 
-			// A map of strings to function pointers to handle each IRC command
-			// each takes a std::smatch by reference with the command  parsed
-			// and returns a boolean signifying if the command completed
-			//
-			// To allow configuration, this is a reference parameter, to be
-			// passed in on construction
-			static std::map<std::string, bool (*)(std::smatch &)> &HandleCommand; 
 			
 		public:
 			// constructor
-			IRCBot(asio::io_context &context, string server, string portNum, 
-					decltype(HandleCommand));
+			IRCBot(asio::io_context &context, string server, string portNum);
 
 			// starts the event handle loop
 			void start();
