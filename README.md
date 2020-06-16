@@ -12,7 +12,8 @@ BariBot is, at the moment, little more than a concept.  Currently, the program s
 - [ ] Implemenent an IRC client class using ASIO tcp sockets
   - [X] Open a TCP socket to a given server+port
   - [X] Handle connection failures with fallof retries
-  - [ ] Parse incoming IRC commands
+  - [X] Parse incoming IRC commands
+  - [ ] Process IRC commands
   - [ ] Generate outbound IRC commands
   - [X] Properly authenticate with Twitch servers
   - [ ] Maintain connection with Twitch servers (ping pong)
