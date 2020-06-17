@@ -22,6 +22,10 @@
 #include <Poco/URI.h>
 #include <Poco/JSON/Parser.h>
 
+// headers for handling files and folders
+#include <Poco/Path.h>
+#include <Poco/File.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <istream>
@@ -167,4 +171,62 @@ bool Twitch::Overseer::setContext(int count)
 	}
 
 	return true;
+}
+
+
+/* run
+ *
+ * run loads in all pre-existing tokens, etc
+ * and then starts an I/O loop to allow for
+ * the launching and stopping of client
+ * instances.
+ *
+ */
+void Twitch::Overseer::run()
+{
+	using std::cout;
+	using std::cin;
+	using std::endl;
+
+	cout << "***Initializing BariBot***" << endl;
+	cout << "Searching for stored tokens..." << endl;
+
+	// generate path to tokens
+	Poco::Path TokenPath(false);
+	TokenPath.pushDirectory(".Tokens");
+
+	// search every token in the folder
+	Poco::File TokenFolder(TokenPath);
+	if (!TokenFolder.exists())
+	{
+		cout << "No Token Directory found, creating" << endl;
+		TokenFolder.createDirectory();
+	}
+	else
+	{
+		// check to ensure this is a directory
+		if (!TokenFolder.isDirectory())
+			throw std::runtime_error("A file with the same name as the token folder exists");
+
+		// get all files in folder
+		TokenFolder.list(TokenFiles);
+
+		cout << "Found " << TokenFiles.size() << " token files" << endl;
+	}
+
+	cout << "Starting I/O loop" << endl << endl;
+
+	cout << "Welcome to BariBot" << endl;
+
+
+
+	std::string input;
+	do
+	{
+		// prompt
+		cout << "> ";
+		cin >> input;
+
+
+	}while(input != "exit");
 }

@@ -16,7 +16,10 @@
 #define TWITCH_OVERSEER
 
 #include <map>
+#include <vector>
 #include <utility>
+
+#include <Poco/File.h>
 
 #include "token.hpp"
 #include "TIRCBot.hpp"
@@ -31,6 +34,9 @@ namespace Twitch
 			// the universal IO context
 			asio::io_context Context;
 
+			// a vector of Token files
+			std::vector<Poco::File> TokenFiles;
+
 			// a map of tokens to IRCclients to enable easy correlation
 			std::map<Twitch::token, Twitch::IRCBot *> Clients;
 
@@ -44,7 +50,7 @@ namespace Twitch
 			bool _renewToken(Twitch::token &);
 
 		public:			
-			// destructor needed
+			// destructor
 			virtual ~Overseer();
 
 			// function to set ClientID and Client Secret
@@ -57,7 +63,11 @@ namespace Twitch
 			std::pair<Twitch::token, Twitch::IRCBot *> createClientInstance(Twitch::token tok, std::string server, std::string port);
 		
 			// function to toggle context
+			// TODO - REMOVE
 			bool setContext(int beOn);
+
+			// function to start the overseer
+			void run();
 	};
 }
 
