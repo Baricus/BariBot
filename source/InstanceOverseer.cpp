@@ -220,13 +220,52 @@ void Twitch::Overseer::run()
 
 
 
-	std::string input;
+	int input;
 	do
 	{
-		// prompt
+		// prompt (for now, very simplistic)
+		cout << "***Please select an option***"    << endl
+			 << "\t0 - Exit"                       << endl
+			 << endl
+			 << "\t1 - List all Tokens"            << endl
+			 << "\t2 - Add a new token"            << endl
+			 << "\t3 - Delete an existing token"   << endl
+			 << endl
+			 << "\t4 - Create new client instance" << endl
+			 << "\t5 - Stop client instance"       << endl;
 		cout << "> ";
 		cin >> input;
 
+		// execute based on instructions
+		switch(input)
+		{
+			case 1:
+				cout << endl << "Current Tokens:" << endl;
+				for (auto F : TokenFiles)
+					cout << "\t" << F.path().end().base() << endl;
+				cout << endl;
+				break;
 
-	}while(input != "exit");
+			case 2:
+
+				break;
+
+			case 3:
+
+				break;
+
+			case 4:
+
+				break;
+
+			case 5:
+				
+				break;
+
+			default:
+				// do nothing
+				break;
+		}
+
+	}while(input != 0);
 }
