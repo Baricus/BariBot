@@ -22,6 +22,8 @@
 
 #include <string>
 #include <set>
+#include <ostream>
+#include <istream>
 
 namespace Twitch
 {
@@ -34,5 +36,26 @@ namespace Twitch
 
 		std::string scopes;
 	};
+}
+
+// two overloaded operators
+std::ostream& operator<<(std::ostream& os, const Twitch::token &T)
+{
+	os   << T.username     << std::endl
+		 << T.accessToken  << std::endl
+		 << T.refreshToken << std::endl
+		 << T.scopes       << std::endl;
+
+	return os;
+}
+
+std::istream& operator>>(std::istream& is, Twitch::token &T)
+{
+	is >> T.username;
+	is >> T.accessToken;
+	is >> T.refreshToken;
+	is >> T.scopes;
+
+	return is;
 }
 #endif

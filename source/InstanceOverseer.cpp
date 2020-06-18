@@ -247,6 +247,9 @@ void Twitch::Overseer::run()
 				break;
 
 			case 2:
+				cout << "Adding new token" << endl
+					 << "Enter token name" << endl;
+
 
 				break;
 
