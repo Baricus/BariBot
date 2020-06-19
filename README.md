@@ -20,6 +20,7 @@ BariBot is, at the moment, little more than a concept.  Currently, the program s
   - [ ] Handle user commands
   - [ ] Implement Twitch-specific IRC functionality
 - [ ] Create a manager class to handle client instances
+  - [X] Create new token files
   - [X] Refresh implicit tokens for instances
   - [ ] Generate client credentials for non IRC api calls 
   - [ ] Instantiate instances on demand
