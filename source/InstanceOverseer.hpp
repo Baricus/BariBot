@@ -49,6 +49,9 @@ namespace Twitch
 			// a function to renew those tokens as needed (to pass to clients)
 			bool _renewToken(Twitch::token &);
 
+			// a function to create a token file
+			void _createToken(std::istream &in, Poco::File &dir);
+
 		public:			
 			// destructor
 			virtual ~Overseer();

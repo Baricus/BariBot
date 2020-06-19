@@ -29,7 +29,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <istream>
-
+#include <fstream>
 
 /* _renewToken
  *
@@ -242,15 +242,12 @@ void Twitch::Overseer::run()
 			case 1:
 				cout << endl << "Current Tokens:" << endl;
 				for (auto F : TokenFiles)
-					cout << "\t" << F.path().end().base() << endl;
+					cout << "\t" << Poco::Path(F.path()).getFileName() << endl;
 				cout << endl;
 				break;
 
 			case 2:
-				cout << "Adding new token" << endl
-					 << "Enter token name" << endl;
-
-
+				_createToken(cin, TokenFolder);
 				break;
 
 			case 3:
@@ -271,4 +268,71 @@ void Twitch::Overseer::run()
 		}
 
 	}while(input != 0);
+}
+
+
+/* _createToken
+ *
+ * This prompts the user to create a new token file
+ * from an instream, with the established token directory
+ * passed to it.  The token is written to a file and added
+ * to the list of eligable tokens
+ *
+ */
+void Twitch::Overseer::_createToken(std::istream &in, Poco::File &dir)
+{
+	using std::cout;
+	using std::endl;
+
+	std::string fileName, username, token, refresh, scopes;
+
+	// name
+	cout << "Creating a token"      << endl
+		 << "Enter a fileName: ";
+	in >> fileName;
+
+	// creates new file
+	Poco::Path path(dir.path(), fileName + ".tok");
+	Poco::File newToken(path);
+
+	if (newToken.exists())
+	{
+		cout << "ERROR: Token file already exists" << endl;
+		return;
+	}
+	else
+	{
+		newToken.createFile();
+		cout << "Succesfully created token file" << endl;
+	}
+
+	// user
+	cout << "Enter the login username: ";
+	in >> username;
+
+	// token
+	cout << "Enter the Oauth2 token: ";
+	in >> token;
+
+	// refresh
+	cout << "Enter the refresh token: ";
+	in >> refresh;
+
+	// scopes
+	cout << "Enter the list of scopes: ";
+	in >> scopes;
+
+	// create the token
+	Twitch::token temp;
+	temp.username = username;
+	temp.accessToken = token;
+	temp.refreshToken = refresh;
+	temp.scopes = scopes;
+
+	// streams in the token
+	std::fstream output(newToken.path().c_str());
+	output << temp;
+
+	// adds this token to the list of tokens
+	TokenFiles.push_back(newToken);
 }
