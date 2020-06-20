@@ -148,38 +148,12 @@ std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstanc
 }
 
 
-/* setContext
- *
- * setContext turns on and off the IO context.  
- * It creates X number threads of when applied.
- *
- * If threads is zero, it turns off the context
- *
- * It returns true assuming everything happens
- *
- * TODO - REMOVE FROM IMPLEMENTATION
- */
-bool Twitch::Overseer::setContext(int count)
-{
-	try
-	{
-	Context.run();
-	}
-	catch(std::runtime_error &e)
-	{
-		std::cout << e.what() << std::endl;
-	}
-
-	return true;
-}
-
-
 /* run
  *
  * run loads in all pre-existing tokens, etc
  * and then starts an I/O loop to allow for
  * the launching and stopping of client
- * instances.
+ * instances and token management.
  *
  */
 void Twitch::Overseer::run()
@@ -240,6 +214,12 @@ void Twitch::Overseer::run()
 		switch(input)
 		{
 			case 1:
+				if (TokenFiles.size() == 0)
+				{
+					cout << "There are no tokens" << endl;
+					break;
+				}
+
 				cout << endl << "Current Tokens:" << endl;
 				for (auto F : TokenFiles)
 					cout << "\t" << Poco::Path(F.path()).getFileName() << endl;
@@ -247,11 +227,28 @@ void Twitch::Overseer::run()
 				break;
 
 			case 2:
-				_createToken(cin, TokenFolder);
+				createToken(cin, TokenFolder);
 				break;
 
 			case 3:
+				// check to ensure we have values
+				if (TokenFiles.size() == 0)
+				{
+					cout << "ERROR: No tokens to delete" << endl;
+					break;
+				}
 
+				cout << "Choose a token to delete: " << endl;
+				for (int i = 0; i < TokenFiles.size(); i++)
+					cout << "\t" << (i+1) << " - " << 
+						Poco::Path(TokenFiles[i].path()).getFileName() << endl;
+
+				cout << "> ";
+				int input;
+				cin >> input;
+
+				// -1 to account for indexing starting at 1
+				deleteToken(input - 1);
 				break;
 
 			case 4:
@@ -279,7 +276,7 @@ void Twitch::Overseer::run()
  * to the list of eligable tokens
  *
  */
-void Twitch::Overseer::_createToken(std::istream &in, Poco::File &dir)
+void Twitch::Overseer::createToken(std::istream &in, Poco::File &dir)
 {
 	using std::cout;
 	using std::endl;
@@ -335,4 +332,21 @@ void Twitch::Overseer::_createToken(std::istream &in, Poco::File &dir)
 
 	// adds this token to the list of tokens
 	TokenFiles.push_back(newToken);
+}
+
+
+/* deleteToken
+ *
+ * delete token just deletes a token file from
+ * the list of stored tokens.  At the same time
+ * it actually deletes the file.
+ *
+ */
+void Twitch::Overseer::deleteToken(int index)
+{
+	// deletes file
+	TokenFiles[index].remove();
+
+	// deletes the file in memory
+	TokenFiles.erase(TokenFiles.begin() + index);
 }

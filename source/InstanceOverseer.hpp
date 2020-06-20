@@ -49,9 +49,6 @@ namespace Twitch
 			// a function to renew those tokens as needed (to pass to clients)
 			bool _renewToken(Twitch::token &);
 
-			// a function to create a token file
-			void _createToken(std::istream &in, Poco::File &dir);
-
 		public:			
 			// destructor
 			virtual ~Overseer();
@@ -64,10 +61,12 @@ namespace Twitch
 			//
 			// May become a private function or change return type to just the token
 			std::pair<Twitch::token, Twitch::IRCBot *> createClientInstance(Twitch::token tok, std::string server, std::string port);
-		
-			// function to toggle context
-			// TODO - REMOVE
-			bool setContext(int beOn);
+
+			// a function to create a token file
+			void createToken(std::istream &in, Poco::File &dir);
+
+			// a function to delete a token file and update the list of tokens accordingly
+			void deleteToken(int index);
 
 			// function to start the overseer
 			void run();
