@@ -29,7 +29,7 @@
 CXX = g++
 
 # for gdb add -ggdb and remove -03
-CXXFLAGS = -O3 -Wall -Wextra -std=c++11
+CXXFLAGS = -ggdb -Wall -Wextra -std=c++11
 
 # lpthread linked for asio compatability
 # lPoco* for HTTP post requests

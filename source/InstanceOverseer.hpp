@@ -37,8 +37,8 @@ namespace Twitch
 			// a vector of Token files
 			std::vector<Poco::File> TokenFiles;
 
-			// a map of tokens to IRCclients to enable easy correlation
-			std::map<Twitch::token, Twitch::IRCBot *> Clients;
+			// a map of token files to IRCclients to enable easy correlation
+			std::vector<Twitch::IRCBot> Clients;
 
 			// client ID and secret
 			std::string ClientID, ClientSecret;
@@ -60,7 +60,7 @@ namespace Twitch
 			// Returns a pair for easy insertion into the map
 			//
 			// May become a private function or change return type to just the token
-			std::pair<Twitch::token, Twitch::IRCBot *> createClientInstance(Twitch::token tok, std::string server, std::string port);
+			void createClientInstance(int tokenSelected, std::string server, std::string port);
 
 			// a function to create a token file
 			void createToken(std::istream &in, Poco::File &dir);

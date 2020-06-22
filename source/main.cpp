@@ -24,7 +24,7 @@ int main()
 	// creates the overseer
 	Twitch::Overseer BariBot;
 
-	// runs it
+	// runs it (why did I write this?)
 	BariBot.run();
 
 	return 0;

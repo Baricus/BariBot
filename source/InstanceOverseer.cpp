@@ -8,6 +8,7 @@
 
 
 #include "InstanceOverseer.hpp"
+#include "TIRCBot.hpp"
 
 // Poco headers for a HTTPS client session to send
 // POSTS to Twitch servers
@@ -30,6 +31,8 @@
 #include <iostream>
 #include <istream>
 #include <fstream>
+#include <stdexcept>
+#include <thread>
 
 /* _renewToken
  *
@@ -89,15 +92,12 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 
 /* ~Overseer (destructor)
  *
- * Deletes every IRCBot instance in the map
+ * currently not needed
  *
  */
 Twitch::Overseer::~Overseer()
 {
-	for (auto pair : Clients)
-	{
-		delete pair.second;
-	}
+
 }
 
 
@@ -121,30 +121,69 @@ void Twitch::Overseer::setAppCreds(std::string id, std::string secret)
  * which is caught here.  This prompts a token renewal and a
  * retry.
  */
-std::pair<Twitch::token, Twitch::IRCBot *> Twitch::Overseer::createClientInstance(
-		Twitch::token tok, 
+void Twitch::Overseer::createClientInstance(
+		int tokenSelected, 
 		std::string server,
-		std::string portN
+		std::string port
 		)
 {
-	
-	Twitch::IRCBot *client; 
+	using std::cout;
+	using std::endl;
 
-	// creates a client instance
-	client = new Twitch::IRCBot(Context, server, portN, MasterIRCCorrelator);
-	
-	// TODO temporary fix - just refresh the token
-	//_renewToken(tok);
+	cout << "Launching client thread" << endl;
+	// starts new thread to run the client
+	std::thread clientThread( [this, tokenSelected, server, port] ()
+			{
+			cout << "Creating client" << endl;
+			// creates a client
+			Clients.push_back(Twitch::IRCBot(Context, server, port, MasterIRCCorrelator));
 
-	// authenticates the client
-	client->giveToken(tok.accessToken);
-	client->giveUsername(tok.username);
+			int curClient = Clients.size() - 1;
 
-	// TODO - try catch for token renew
-	client->start();
-	
-	// have a working cleint and token so return
-	return std::make_pair(tok, client);
+			cout << "Reading in selected token" << endl;
+			// opens the token file and gets needed data
+			std::ifstream tokenF(TokenFiles[tokenSelected].path());
+
+			Twitch::token curTok;
+			tokenF >> curTok;
+			tokenF.close();
+
+			cout << "Passing token to client" << endl;
+
+			// set's up client
+			Clients[curClient].giveToken(curTok.accessToken);
+			Clients[curClient].giveUsername(curTok.username);
+
+			cout << curTok.accessToken << " | " << curTok.username << endl;
+
+
+			// starts the client
+			try
+			{
+				Clients[curClient].start();
+			}
+			catch(const std::runtime_error &e)
+			{
+				// deletes client from list
+
+			}
+
+			// once it's up and running put the thread into the context
+			try
+			{
+				Context.run();
+			}
+			catch(const std::runtime_error &e)
+			{
+				if (strcmp(e.what(), "LOGIN_FAILED") == 0)
+				{
+					std::cout << "HI"<< std::endl;
+					// TODO - renew token and update file for reconnection
+				}
+			}
+			});
+
+	clientThread.detach();
 }
 
 
@@ -193,8 +232,44 @@ void Twitch::Overseer::run()
 	cout << "Welcome to BariBot" << endl;
 
 
+	// a lambda to print tokens
+	auto printTokens = [&](std::string request, bool shouldPrompt=false) -> int
+	{
+		// check to ensure we have values
+		if (TokenFiles.size() == 0)
+		{
+			cout << "ERROR: No tokens" << endl;
+			return -1;
+		}
 
-	int input;
+		cout << request << endl;
+		for (int i = 0; i < TokenFiles.size(); i++)
+			cout << "\t" << (i+1) << " - " << 
+				Poco::Path(TokenFiles[i].path()).getFileName() << endl;
+
+		if (shouldPrompt)
+		{
+			cout << "> ";
+			int input;
+			cin >> input;
+
+			// error check
+			if (input > TokenFiles.size() || input < 1)
+			{
+				cout << "ERROR: out of bounds" << endl;
+				return -1;
+			}
+
+			return input-1;
+		}
+		else
+		{
+			return 0;
+		}
+	};
+
+
+	int menuChoice, selection;
 	do
 	{
 		// prompt (for now, very simplistic)
@@ -208,51 +283,30 @@ void Twitch::Overseer::run()
 			 << "\t4 - Create new client instance" << endl
 			 << "\t5 - Stop client instance"       << endl;
 		cout << "> ";
-		cin >> input;
+		cin >> menuChoice;
 
 		// execute based on instructions
-		switch(input)
+		switch(menuChoice)
 		{
 			case 1:
-				if (TokenFiles.size() == 0)
-				{
-					cout << "There are no tokens" << endl;
-					break;
-				}
-
-				cout << endl << "Current Tokens:" << endl;
-				for (auto F : TokenFiles)
-					cout << "\t" << Poco::Path(F.path()).getFileName() << endl;
-				cout << endl;
+				printTokens("Current tokens:");	
 				break;
-
 			case 2:
 				createToken(cin, TokenFolder);
 				break;
 
 			case 3:
-				// check to ensure we have values
-				if (TokenFiles.size() == 0)
-				{
-					cout << "ERROR: No tokens to delete" << endl;
+				if ((selection = printTokens("Choose a token to delete:", true)) == -1)
 					break;
-				}
 
-				cout << "Choose a token to delete: " << endl;
-				for (int i = 0; i < TokenFiles.size(); i++)
-					cout << "\t" << (i+1) << " - " << 
-						Poco::Path(TokenFiles[i].path()).getFileName() << endl;
-
-				cout << "> ";
-				int input;
-				cin >> input;
-
-				// -1 to account for indexing starting at 1
-				deleteToken(input - 1);
+				deleteToken(selection);
 				break;
 
 			case 4:
+				if ((selection = printTokens("Choose a token to use:", true)) == -1)
+					break;
 
+				createClientInstance(selection, "irc.chat.twitch.tv", "6667");
 				break;
 
 			case 5:
@@ -264,7 +318,7 @@ void Twitch::Overseer::run()
 				break;
 		}
 
-	}while(input != 0);
+	}while(menuChoice != 0);
 }
 
 
@@ -329,6 +383,7 @@ void Twitch::Overseer::createToken(std::istream &in, Poco::File &dir)
 	// streams in the token
 	std::fstream output(newToken.path().c_str());
 	output << temp;
+	output.close();
 
 	// adds this token to the list of tokens
 	TokenFiles.push_back(newToken);

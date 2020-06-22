@@ -24,7 +24,6 @@
 #include <fstream>
 
 
-
 //TODO - remove
 using std::cout;
 using std::endl;
@@ -82,7 +81,7 @@ void Twitch::IRCBot::_connect(long delay)
 		std::cout << "Retry wait time: " <<delay << std::endl;
 		// if we hit an arbitrary limit on time, just throw
 		if (delay > 1000)
-			throw;
+			throw std::runtime_error("Could not connect");
 
 		// if we failed to connect, retry on a falloff timer
 		asio::steady_timer timer(Context, asio::chrono::seconds(delay));
@@ -152,7 +151,8 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// gets line from buffer (keeping '\n') and clears it
 	string line;
 	line = inString.substr(0, size);
-	inString.erase(0, size);
+	//inString.erase(0, size);
+	inBuffer.consume(size);
 
 	// A regex expression to parse an IRC command into a smatch.  
 	// The expression is in EMCAscript regex and is set to prefer
