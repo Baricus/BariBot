@@ -27,12 +27,43 @@
 #include <Poco/Path.h>
 #include <Poco/File.h>
 
+#include <asio/executor_work_guard.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <istream>
 #include <fstream>
 #include <stdexcept>
 #include <thread>
+
+
+/* Overseer (Constructor)
+ *
+ * starts a IO work to prevent stoppage
+ *
+ */
+Twitch::Overseer::Overseer() : work(make_work_guard(Context))
+{
+	
+}
+
+
+/* ~Overseer (destructor)
+ *
+ * stops IO service and joins threads
+ *
+ */
+Twitch::Overseer::~Overseer()
+{
+	Context.stop();
+
+	for (auto &T : Threads)
+	{
+		if (T.joinable())
+			T.join();
+	}
+
+}
+
 
 /* _renewToken
  *
@@ -90,17 +121,6 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 }
 
 
-/* ~Overseer (destructor)
- *
- * currently not needed
- *
- */
-Twitch::Overseer::~Overseer()
-{
-
-}
-
-
 /* setAppCreds
  *
  * a simple setter function for the ClientID and clientSecret
@@ -111,80 +131,6 @@ void Twitch::Overseer::setAppCreds(std::string id, std::string secret)
 	ClientSecret = secret;
 }
 
-
-/* createClientInstance
- *
- * createInstance creates a new TwitchIRC client instance
- * and binds it to the current token to return.  
- *
- * If the token is invalid, the client throws an authentication error
- * which is caught here.  This prompts a token renewal and a
- * retry.
- */
-void Twitch::Overseer::createClientInstance(
-		int tokenSelected, 
-		std::string server,
-		std::string port
-		)
-{
-	using std::cout;
-	using std::endl;
-
-	cout << "Launching client thread" << endl;
-	// starts new thread to run the client
-	std::thread clientThread( [this, tokenSelected, server, port] ()
-			{
-			cout << "Creating client" << endl;
-			// creates a client
-			Clients.push_back(Twitch::IRCBot(Context, server, port, MasterIRCCorrelator));
-
-			int curClient = Clients.size() - 1;
-
-			cout << "Reading in selected token" << endl;
-			// opens the token file and gets needed data
-			std::ifstream tokenF(TokenFiles[tokenSelected].path());
-
-			Twitch::token curTok;
-			tokenF >> curTok;
-			tokenF.close();
-
-			cout << "Passing token to client" << endl;
-
-			// set's up client
-			Clients[curClient].giveToken(curTok.accessToken);
-			Clients[curClient].giveUsername(curTok.username);
-
-			cout << curTok.accessToken << " | " << curTok.username << endl;
-
-
-			// starts the client
-			try
-			{
-				Clients[curClient].start();
-			}
-			catch(const std::runtime_error &e)
-			{
-				// deletes client from list
-
-			}
-
-			// once it's up and running put the thread into the context
-			try
-			{
-				Context.run();
-			}
-			catch(const std::runtime_error &e)
-			{
-				if (strcmp(e.what(), "LOGIN_FAILED") == 0)
-				{
-					std::cout << "HI"<< std::endl;
-					// TODO - renew token and update file for reconnection
-				}
-			}
-			});
-
-	clientThread.detach();
-}
 
 
 /* run
@@ -227,7 +173,32 @@ void Twitch::Overseer::run()
 		cout << "Found " << TokenFiles.size() << " token files" << endl;
 	}
 
+	// get's a number of threads
+	cout << "Please input a number of threads to work IO: " << endl << "> ";
+	int threadCount;
+	cin >> threadCount;
+	
+	for (int i = 0; i < threadCount; i++)
+	{
+		// runs context with new threads
+		Threads.push_back(std::thread( [this, i]
+				{
+					cout << "Thread " << i << " activated." << endl;
+
+					try
+					{
+						Context.run();		
+					}
+					catch(const std::runtime_error &e)
+					{
+						cout << "Caught runtime error: " << e.what();
+					}
+				}));
+	}
+
+
 	cout << "Starting I/O loop" << endl << endl;
+	
 
 	cout << "Welcome to BariBot" << endl;
 
@@ -405,3 +376,57 @@ void Twitch::Overseer::deleteToken(int index)
 	// deletes the file in memory
 	TokenFiles.erase(TokenFiles.begin() + index);
 }
+
+
+/* createClientInstance
+ *
+ * createInstance creates a new TwitchIRC client instance
+ * and binds it to the current token to return.  
+ *
+ * If the token is invalid, the client throws an authentication error
+ * which is caught here.  This prompts a token renewal and a
+ * retry.
+ */
+void Twitch::Overseer::createClientInstance(
+		int tokenSelected, 
+		std::string server,
+		std::string port
+		)
+{
+	using std::cout;
+	using std::endl;
+
+
+	// creates a client
+	Clients.push_back(Twitch::IRCBot(Context, server, port, MasterIRCCorrelator));
+
+	int curClient = Clients.size() - 1;
+
+	cout << "Reading in selected token" << endl;
+	// opens the token file and gets needed data
+	std::ifstream tokenF(TokenFiles[tokenSelected].path());
+
+	Twitch::token curTok;
+	tokenF >> curTok;
+	tokenF.close();
+
+	cout << "Passing token to client" << endl;
+
+	// set's up client
+	Clients[curClient].giveToken(curTok.accessToken);
+	Clients[curClient].giveUsername(curTok.username);
+
+	// starts the client
+	try
+	{
+		Clients[curClient].start();
+	}
+	catch(const std::runtime_error &e)
+	{
+		// deletes client from list
+
+	}
+
+}
+
+

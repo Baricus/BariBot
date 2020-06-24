@@ -11,6 +11,7 @@
 #include <asio/buffer.hpp>
 #include <asio/io_context.hpp>
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <map>
@@ -24,8 +25,6 @@
 #include "IRCCorrelator.hpp"
 #include "IRCResults.hpp"
 
-using std::string;
-using std::vector;
 
 namespace Twitch
 {
@@ -38,7 +37,7 @@ namespace Twitch
 			asio::io_context &Context;
 
 			// connection data
-			string Server, PortNumber;
+			std::string Server, PortNumber;
 
 			// strand for handle execution (currently unneeded)
 			asio::strand<asio::io_context::executor_type> _Strand;
@@ -52,16 +51,18 @@ namespace Twitch
 			//ASIO error system
 			asio::error_code error;
 
-			//read buffer
-			string inString;
+			//read buffer (string has to be heap for...reasons??)
+			std::string *inString;
 			asio::dynamic_string_buffer
-			<string::value_type, string::traits_type, string::allocator_type> inBuffer;
+			<std::string::value_type, std::string::traits_type, std::string::allocator_type>
+				inBuffer;
+
 
 			// All non-network related members
 
 			// Auth Token and username (stored in case of reconnection)
-			string Token;
-			string Username;
+			std::string Token;
+			std::string Username;
 
 			// a helper that correlates IRC commands to functions
 			IRCCorrelator &IRC;
@@ -70,7 +71,6 @@ namespace Twitch
 			
 			// Connection related functions
 			void _connect(long delay=0);
-			void _authenticate();
 
 			// message recieve handler
 			void _onMessage(const asio::error_code &e, std::size_t size);
@@ -78,16 +78,18 @@ namespace Twitch
 			
 		public:
 			// constructor
-			IRCBot(asio::io_context &context, string server, string portNum,
+			IRCBot(asio::io_context &context, std::string server, std::string portNum,
 					IRCCorrelator &IRCCor);
+			// destrcutor
+			virtual ~IRCBot();
 
 			// starts the event handle loop
 			void start();
 
 			// Setup functions that must be run before calling start
 			// Provides a token to the bot for authentification.
-			void giveToken(string tok);
-			void giveUsername(string user);
+			void giveToken(std::string tok);
+			void giveUsername(std::string user);
 	};
 }
 #endif

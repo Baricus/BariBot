@@ -37,16 +37,27 @@ using std::endl;
 //
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
-Twitch::IRCBot::IRCBot(asio::io_context &context, string serv, string portNum,
+Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string portNum,
 		IRCCorrelator &IRCCor)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
 		IPresolver(context), TCPsocket(context),
-		inString(), inBuffer(inString),
+		inString(new std::string()), inBuffer(*inString),
 		IRC(IRCCor)
 {
 	_connect();
+}
+
+
+// Destructor
+//
+// this literally just frees one string, because
+// for some reason inString had to be on the heap
+// to make the inBuffer not explode
+Twitch::IRCBot::~IRCBot()
+{
+	delete inString;
 }
 
 
@@ -92,18 +103,6 @@ void Twitch::IRCBot::_connect(long delay)
 }
 
 
-// _authenticate
-//
-// authenticate sends two IRC messages to the Twitch
-// server to properly establish the connection
-void Twitch::IRCBot::_authenticate()
-{
-	// writes two lines to the IRC, pass and nickname
-	asio::write(TCPsocket, asio::buffer("PASS oauth:" + Token + "\r\n"));
-	asio::write(TCPsocket, asio::buffer("NICK " + Username + "\r\n"));
-}
-
-
 // _start
 //
 // start binds and initalizes the handlers for each client.
@@ -115,17 +114,47 @@ void Twitch::IRCBot::_authenticate()
 // to handle commands
 void Twitch::IRCBot::start()
 {
-	// binds onMessage to the strand as a handler for the first read
-	asio::async_read_until(TCPsocket, inBuffer, '\n', 
+	// queues up a first write for the password and nickname
+	asio::async_write(TCPsocket, 
+			asio::buffer("PASS oauth:" + Token + "\r\nNICK " + Username + "\r\n"),
 			asio::bind_executor(_Strand,
+
+				// lambda to call after write completes
 				[this](const asio::error_code &e, size_t size)
 				{
-					this->_onMessage(e, size);
+				
+					// if nothing goes wrong
+					if (!e)
+					{
+						// queue up an asyncronous read over the socket
+						asio::async_read_until(
+							this->TCPsocket, 
+							this->inBuffer, 
+							'\n', 
+							asio::bind_executor(_Strand,
+								[this](const asio::error_code &e, size_t size)
+								{
+									this->_onMessage(e, size);
+								}
+								));
+					}
 				}
 				));
 
-	_authenticate();	
 
+	// binds onMessage to the strand as a handler for the first read
+	//asio::async_read_until(TCPsocket, inBuffer, '\n', 
+			//[this](const asio::error_code &e, size_t size)
+			//{
+				//this->_onMessage(e, size);
+			//});
+	//asio::async_read_until(TCPsocket, inBuffer, '\n', 
+			//asio::bind_executor(_Strand,
+				//[this](const asio::error_code &e, size_t size)
+				//{
+					//this->_onMessage(e, size);
+				//}
+				//));
 }
 
 // _onMessage
@@ -149,10 +178,10 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	}
 
 	// gets line from buffer (keeping '\n') and clears it
-	string line;
-	line = inString.substr(0, size);
-	//inString.erase(0, size);
-	inBuffer.consume(size);
+	std::string line;
+	line = inString->substr(0, size);
+	inString->erase(0, size);
+	//inBuffer.consume(size);
 
 	// A regex expression to parse an IRC command into a smatch.  
 	// The expression is in EMCAscript regex and is set to prefer
@@ -166,7 +195,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	//
 	// Due to errors in C++11 EMCAregex, the ^ and $ assertions
 	// fail to properly function here.  Thus, we kept the \n on the
-	// end of the string to create a functionally equivalent line.  
+	// end of the std::string to create a functionally equivalent line.  
 	// This could be fixed in C++17 with the multiline flag but,
 	// as I already decided to stick with '11, we'll just deal with it.
 	//
@@ -246,7 +275,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 //
 // This is used in authentificiation with Twitch's
 // servers
-void Twitch::IRCBot::giveToken(string tok)
+void Twitch::IRCBot::giveToken(std::string tok)
 {
 	// TODO Error checking (look up twitch token requirements)
 
@@ -260,7 +289,7 @@ void Twitch::IRCBot::giveToken(string tok)
 // the instance with it's login username.
 //
 // This is used to authenticate with Twitch servers
-void Twitch::IRCBot::giveUsername(string user)
+void Twitch::IRCBot::giveUsername(std::string user)
 {
 	// TODO Error checking (not really necessary, but helpful)
 	

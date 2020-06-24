@@ -15,6 +15,7 @@
 #ifndef TWITCH_OVERSEER
 #define TWITCH_OVERSEER
 
+#include <asio/executor_work_guard.hpp>
 #include <map>
 #include <vector>
 #include <utility>
@@ -31,8 +32,12 @@ namespace Twitch
 	class Overseer
 	{
 		private:
-			// the universal IO context
+			// the universal IO context and work guard
 			asio::io_context Context;
+			asio::executor_work_guard<asio::io_context::executor_type> work;
+
+			// a vector of threads to work on that context
+			std::vector<std::thread> Threads;
 
 			// a vector of Token files
 			std::vector<Poco::File> TokenFiles;
@@ -50,7 +55,8 @@ namespace Twitch
 			bool _renewToken(Twitch::token &);
 
 		public:			
-			// destructor
+			// constructor, destructor
+			Overseer();
 			virtual ~Overseer();
 
 			// function to set ClientID and Client Secret
