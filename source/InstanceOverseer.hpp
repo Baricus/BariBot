@@ -43,7 +43,7 @@ namespace Twitch
 			std::vector<Poco::File> TokenFiles;
 
 			// a map of token files to IRCclients to enable easy correlation
-			std::vector<Twitch::IRCBot> Clients;
+			std::vector<Twitch::IRCBot *> Clients;
 
 			// client ID and secret
 			std::string ClientID, ClientSecret;

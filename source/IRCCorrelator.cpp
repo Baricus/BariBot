@@ -19,8 +19,9 @@
  */
 
 #include "IRCCorrelator.hpp"
-#include "IRCResults.hpp"
 
+// IRCBot included for use
+#include "TIRCBot.hpp"
 
 // TODO - delete
 #include <iostream>
@@ -49,7 +50,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	// to record, but often require no response.  Thus, unless
 	// the message specifically requires a response, we only
 	// record.
-	SFM["NOTICE"] = [](std::smatch &Sm, Twitch::IRCResults &Res) -> bool
+	SFM["NOTICE"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> bool
 	{
 		if (Sm[5].str() == "Login authentication failed") // need to restart
 		{
@@ -64,9 +65,9 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	//
 	// Ping commands are used to keep connection alive.  
 	// It is simply a request for a matching "pong" response
-	SFM["PING"] = [](std::smatch &Sm, Twitch::IRCResults &Res) -> bool
+	SFM["PING"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> bool
 	{
-		Res.output = "PONG :" + Sm[5].str();
+		//Res.output = "PONG :" + Sm[5].str();
 
 		return true;
 	};

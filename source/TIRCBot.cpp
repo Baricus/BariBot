@@ -38,7 +38,8 @@ using std::endl;
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
 Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string portNum,
-		IRCCorrelator &IRCCor)
+		IRCCorrelator &IRCCor,
+		int client)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
@@ -46,6 +47,7 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string 
 		inString(new std::string()), inBuffer(*inString),
 		IRC(IRCCor)
 {
+	this->ClientIndex = client;
 	_connect();
 }
 
@@ -139,22 +141,7 @@ void Twitch::IRCBot::start()
 								));
 					}
 				}
-				));
-
-
-	// binds onMessage to the strand as a handler for the first read
-	//asio::async_read_until(TCPsocket, inBuffer, '\n', 
-			//[this](const asio::error_code &e, size_t size)
-			//{
-				//this->_onMessage(e, size);
-			//});
-	//asio::async_read_until(TCPsocket, inBuffer, '\n', 
-			//asio::bind_executor(_Strand,
-				//[this](const asio::error_code &e, size_t size)
-				//{
-					//this->_onMessage(e, size);
-				//}
-				//));
+			));
 }
 
 // _onMessage
@@ -181,7 +168,6 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	std::string line;
 	line = inString->substr(0, size);
 	inString->erase(0, size);
-	//inBuffer.consume(size);
 
 	// A regex expression to parse an IRC command into a smatch.  
 	// The expression is in EMCAscript regex and is set to prefer
@@ -234,8 +220,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 		else //else, we got our response
 		{
 			// call the function related to the command
-			IRCResults result;
-			if (!iter->second(sm, result))
+			if (!iter->second(sm, this))
 			{
 				// TODO - log failure
 			}
@@ -243,21 +228,11 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 			{
 				// TODO - log success and result
 
-				// analyze the result to know what to output, etc
-				if (result.shouldOutput)
-				{
-					asio::write(TCPsocket, asio::buffer(result.output));
-				}
-
-				if (result.shouldClose)
-				{
-					// Do I want this?	
-				}
 			}
 		}
 	}
 
-	// resets handler	
+	// rebinds handler	
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 
 			asio::bind_executor(_Strand,
 				[this](const asio::error_code &e, size_t size)

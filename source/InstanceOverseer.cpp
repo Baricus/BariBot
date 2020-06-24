@@ -43,13 +43,15 @@
  */
 Twitch::Overseer::Overseer() : work(make_work_guard(Context))
 {
-	
+		
 }
 
 
 /* ~Overseer (destructor)
  *
  * stops IO service and joins threads
+ *
+ * then deletes every client
  *
  */
 Twitch::Overseer::~Overseer()
@@ -61,7 +63,11 @@ Twitch::Overseer::~Overseer()
 		if (T.joinable())
 			T.join();
 	}
-
+	
+	for (auto C : Clients)
+	{
+		delete C;
+	}
 }
 
 
@@ -191,7 +197,7 @@ void Twitch::Overseer::run()
 					}
 					catch(const std::runtime_error &e)
 					{
-						cout << "Caught runtime error: " << e.what();
+						cout << "Caught runtime error: " << e.what() << endl;
 					}
 				}));
 	}
@@ -398,7 +404,7 @@ void Twitch::Overseer::createClientInstance(
 
 
 	// creates a client
-	Clients.push_back(Twitch::IRCBot(Context, server, port, MasterIRCCorrelator));
+	Clients.push_back(new Twitch::IRCBot(Context, server, port, MasterIRCCorrelator, Clients.size()));
 
 	int curClient = Clients.size() - 1;
 
@@ -413,20 +419,22 @@ void Twitch::Overseer::createClientInstance(
 	cout << "Passing token to client" << endl;
 
 	// set's up client
-	Clients[curClient].giveToken(curTok.accessToken);
-	Clients[curClient].giveUsername(curTok.username);
+	Clients[curClient]->giveToken(curTok.accessToken);
+	Clients[curClient]->giveUsername(curTok.username);
 
 	// starts the client
 	try
 	{
-		Clients[curClient].start();
+		Clients[curClient]->start();
 	}
 	catch(const std::runtime_error &e)
 	{
-		// deletes client from list
+		// get's e.what into a string
+		std::string what(e.what());
 
+		if (what.substr(0, 12) == "LOGIN_FAILED")
+		{
+
+		}
 	}
-
 }
-
-

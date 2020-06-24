@@ -23,7 +23,6 @@
 
 // analysis of IRC commands
 #include "IRCCorrelator.hpp"
-#include "IRCResults.hpp"
 
 
 namespace Twitch
@@ -57,8 +56,10 @@ namespace Twitch
 			<std::string::value_type, std::string::traits_type, std::string::allocator_type>
 				inBuffer;
 
-
 			// All non-network related members
+
+			// token and positions in storage
+			int ClientIndex;
 
 			// Auth Token and username (stored in case of reconnection)
 			std::string Token;
@@ -79,7 +80,8 @@ namespace Twitch
 		public:
 			// constructor
 			IRCBot(asio::io_context &context, std::string server, std::string portNum,
-					IRCCorrelator &IRCCor);
+					IRCCorrelator &IRCCor,
+					int client);
 			// destrcutor
 			virtual ~IRCBot();
 
@@ -90,6 +92,8 @@ namespace Twitch
 			// Provides a token to the bot for authentification.
 			void giveToken(std::string tok);
 			void giveUsername(std::string user);
+
+			friend IRCCorrelator;
 	};
 }
 #endif
