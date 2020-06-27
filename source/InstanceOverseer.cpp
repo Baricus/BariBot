@@ -10,6 +10,8 @@
 #include "InstanceOverseer.hpp"
 #include "TIRCBot.hpp"
 
+#include "loginException.hpp"
+
 // Poco headers for a HTTPS client session to send
 // POSTS to Twitch servers
 #include <Poco/Dynamic/Struct.h>
@@ -195,9 +197,11 @@ void Twitch::Overseer::run()
 					{
 						Context.run();		
 					}
-					catch(const std::runtime_error &e)
+					catch(const loginException &e)
 					{
-						cout << "Caught runtime error: " << e.what() << endl;
+						cout << "Caught loginException error: " << e.what() << endl;
+
+						cout << "Path is:" << e.TokenPath.getFileName() << endl;
 					}
 				}));
 	}
@@ -404,7 +408,7 @@ void Twitch::Overseer::createClientInstance(
 
 
 	// creates a client
-	Clients.push_back(new Twitch::IRCBot(Context, server, port, MasterIRCCorrelator, Clients.size()));
+	Clients.push_back(new Twitch::IRCBot(Context, server, port, MasterIRCCorrelator, TokenFiles[tokenSelected].path()));
 
 	int curClient = Clients.size() - 1;
 

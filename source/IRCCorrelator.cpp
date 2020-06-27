@@ -20,6 +20,8 @@
 
 #include "IRCCorrelator.hpp"
 
+#include "loginException.hpp"
+
 // IRCBot included for use
 #include "TIRCBot.hpp"
 
@@ -54,7 +56,8 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	{
 		if (Sm[5].str() == "Login authentication failed") // need to restart
 		{
-			throw std::runtime_error("LOGIN_FAILED");
+			// TODO - add token index
+			throw loginException("AUTH FAILED", Caller, Caller->Path);
 		}
 
 		return true;
@@ -67,6 +70,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	// It is simply a request for a matching "pong" response
 	SFM["PING"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> bool
 	{
+		
 		//Res.output = "PONG :" + Sm[5].str();
 
 		return true;

@@ -39,15 +39,15 @@ using std::endl;
 // at the same time, each client get's its own strand.  
 Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string portNum,
 		IRCCorrelator &IRCCor,
-		int client)
+		const Poco::Path filePath)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
 		IPresolver(context), TCPsocket(context),
 		inString(new std::string()), inBuffer(*inString),
+		Path(filePath),
 		IRC(IRCCor)
 {
-	this->ClientIndex = client;
 	_connect();
 }
 

@@ -11,6 +11,8 @@
 #include <asio/buffer.hpp>
 #include <asio/io_context.hpp>
 
+#include <Poco/Path.h>
+
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -58,8 +60,8 @@ namespace Twitch
 
 			// All non-network related members
 
-			// token and positions in storage
-			int ClientIndex;
+			// token file reference for thrown error
+			const Poco::Path Path;
 
 			// Auth Token and username (stored in case of reconnection)
 			std::string Token;
@@ -81,7 +83,7 @@ namespace Twitch
 			// constructor
 			IRCBot(asio::io_context &context, std::string server, std::string portNum,
 					IRCCorrelator &IRCCor,
-					int client);
+					const Poco::Path filePath);
 			// destrcutor
 			virtual ~IRCBot();
 
