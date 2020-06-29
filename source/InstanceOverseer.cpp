@@ -156,27 +156,71 @@ void Twitch::Overseer::run()
 	using std::endl;
 
 	cout << "***Initializing BariBot***" << endl;
+
+	cout << "Searching for stored credentials..." << endl;
+
+	Poco::Path credsPath(false);
+	credsPath.pushDirectory(".AppCredentials");
+	Poco::File credsFile(credsPath);
+
+	std::string ID, secret;
+
+	// prompt for new creds
+	if (!credsFile.exists())
+	{
+		cout << "No credentials saved"          << endl
+			 << "Please enter the Client ID: ";
+
+		cin >> ID;
+
+		cout << "Please enter the Client secret: ";
+
+		cin >> secret;
+
+		cout << "storing auth for later runs..." << endl;
+
+		credsFile.createFile();
+		std::fstream out(credsFile.path().c_str());
+		out << ID << endl << secret << endl;
+		out.close();
+	}
+	else
+	{
+		if (!credsFile.isFile())
+			throw std::runtime_error("auth file name taken");
+
+		cout << "Reading in credentials from file..." << endl;
+
+		std::fstream in(credsFile.path().c_str());
+
+		in >> ID >> secret;
+	}
+
+	cout << "Setting credentials..." << endl;
+	setAppCreds(ID, secret);
+
+
 	cout << "Searching for stored tokens..." << endl;
 
 	// generate path to tokens
-	Poco::Path TokenPath(false);
-	TokenPath.pushDirectory(".Tokens");
+	Poco::Path tokenPath(false);
+	tokenPath.pushDirectory(".tokens");
 
 	// search every token in the folder
-	Poco::File TokenFolder(TokenPath);
-	if (!TokenFolder.exists())
+	Poco::File tokenFolder(tokenPath);
+	if (!tokenFolder.exists())
 	{
-		cout << "No Token Directory found, creating" << endl;
-		TokenFolder.createDirectory();
+		cout << "No token Directory found, creating" << endl;
+		tokenFolder.createDirectory();
 	}
 	else
 	{
 		// check to ensure this is a directory
-		if (!TokenFolder.isDirectory())
+		if (!tokenFolder.isDirectory())
 			throw std::runtime_error("A file with the same name as the token folder exists");
 
 		// get all files in folder
-		TokenFolder.list(TokenFiles);
+		tokenFolder.list(TokenFiles);
 
 		cout << "Found " << TokenFiles.size() << " token files" << endl;
 	}
@@ -191,8 +235,6 @@ void Twitch::Overseer::run()
 		// runs context with new threads
 		Threads.push_back(std::thread( [this, i]
 				{
-					cout << "Thread " << i << " activated." << endl;
-
 					try
 					{
 						Context.run();		
@@ -273,7 +315,7 @@ void Twitch::Overseer::run()
 				printTokens("Current tokens:");	
 				break;
 			case 2:
-				createToken(cin, TokenFolder);
+				createToken(cin, tokenFolder);
 				break;
 
 			case 3:
@@ -352,7 +394,10 @@ void Twitch::Overseer::createToken(std::istream &in, Poco::File &dir)
 
 	// scopes
 	cout << "Enter the list of scopes: ";
-	in >> scopes;
+	// uses getline to ensure we don't cause issues with multi-word scopes
+	std::getline(in, scopes); // clears previous \n
+	std::getline(in, scopes);
+	scopes.pop_back(); // \n
 
 	// create the token
 	Twitch::token temp;

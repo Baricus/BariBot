@@ -77,7 +77,6 @@ namespace Twitch
 
 			// message recieve handler
 			void _onMessage(const asio::error_code &e, std::size_t size);
-
 			
 		public:
 			// constructor
@@ -95,6 +94,10 @@ namespace Twitch
 			void giveToken(std::string tok);
 			void giveUsername(std::string user);
 
+			// function to write lines to the socket
+			void write(const std::string messageString);
+
+			// a friend class to handle correlation (likely to be removed)
 			friend IRCCorrelator;
 	};
 }

@@ -270,3 +270,34 @@ void Twitch::IRCBot::giveUsername(std::string user)
 	
 	Username = user;
 }
+
+
+// write
+//
+// write queues a message to asyncronously be written to
+// the TCP socket (and properly logs it)
+void Twitch::IRCBot::write(const std::string messageString)
+{
+	// the buffer needs a string which is gaurenteed to be in scope, so
+	// we re-allocate on the heap as a string
+	//
+	// we also add proper line termination here
+	std::string *message = new std::string(messageString + "\r\n");
+	
+	// queues up write with a simple handler to write to logs and clean up
+	asio::async_write(TCPsocket, asio::buffer(*message),
+			asio::bind_executor(_Strand,
+				[message](const asio::error_code &e, size_t size)
+				{
+					if (e)
+					{
+						// TODO - log error
+					}
+
+					// TODO - log message
+
+					// as message is out of scope, we can delete it
+					delete message;
+				}
+			));
+}

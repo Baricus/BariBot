@@ -70,8 +70,8 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	// It is simply a request for a matching "pong" response
 	SFM["PING"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> bool
 	{
-		
-		//Res.output = "PONG :" + Sm[5].str();
+		// queues an output
+		Caller->write("PONG :" + Sm[5].str());
 
 		return true;
 	};
