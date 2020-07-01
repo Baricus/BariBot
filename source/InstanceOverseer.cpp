@@ -129,6 +129,74 @@ bool Twitch::Overseer::_renewToken(Twitch::token &tok)
 }
 
 
+/* _runContext
+ *
+ * runContext is a blocking function
+ * to provide a thread for the IOContext
+ * to use in asyncronous operations.  It
+ * simply runs the context and deals with
+ * any errors thrown, until the context is
+ * stopped.  
+ *
+ */
+void Twitch::Overseer::_runContext()
+{
+	while(!Context.stopped())
+	{
+		try
+		{
+			Context.run();		
+		}
+		// handles login exceptions by reneweing the token and re-creating client
+		catch(const loginException &e)
+		{
+			// opens the token and renews
+			Poco::File expiredToken(e.TokenPath);
+			if (!expiredToken.isFile())
+			{
+				//TODO - log missing file
+			}
+			else
+			{
+				std::ifstream input(expiredToken.path().c_str());
+
+				if (!input.is_open())
+				{
+					//TODO - log failed open
+				}
+				else
+				{
+					// stream into memory and renew
+					Twitch::token temp;
+					input >> temp;
+
+					if (!_renewToken(temp))
+					{
+						//TODO - log failure
+					}
+					else
+					{
+						input.close();
+
+						//clear file
+						expiredToken.remove();
+						expiredToken.createFile();
+
+						std::ofstream output(expiredToken.path().c_str());
+
+						output << temp;
+						output.close();
+
+						// create a new client
+						createClientInstance(expiredToken, Server, Port);
+					}
+				}
+			}
+		}// end catch for login exceptions
+	}
+}
+
+
 /* setAppCreds
  *
  * a simple setter function for the ClientID and clientSecret
@@ -233,27 +301,8 @@ void Twitch::Overseer::run()
 	for (int i = 0; i < threadCount; i++)
 	{
 		// runs context with new threads
-		Threads.push_back(std::thread( [this, i]
-				{
-					try
-					{
-						Context.run();		
-					}
-					catch(const loginException &e)
-					{
-						cout << "Caught loginException error: " << e.what() << endl;
-
-						cout << "Path is:" << e.TokenPath.getFileName() << endl;
-					}
-				}));
+		Threads.push_back(std::thread(&Twitch::Overseer::_runContext, this));
 	}
-
-
-	cout << "Starting I/O loop" << endl << endl;
-	
-
-	cout << "Welcome to BariBot" << endl;
-
 
 	// a lambda to print tokens
 	auto printTokens = [&](std::string request, bool shouldPrompt=false) -> int
@@ -290,6 +339,11 @@ void Twitch::Overseer::run()
 			return 0;
 		}
 	};
+
+	cout << "Starting I/O loop" << endl << endl;
+	
+
+	cout << "Welcome to BariBot" << endl;
 
 
 	int menuChoice, selection;
@@ -329,7 +383,7 @@ void Twitch::Overseer::run()
 				if ((selection = printTokens("Choose a token to use:", true)) == -1)
 					break;
 
-				createClientInstance(selection, "irc.chat.twitch.tv", "6667");
+				createClientInstance(TokenFiles[selection], Server, Port);
 				break;
 
 			case 5:
@@ -443,7 +497,7 @@ void Twitch::Overseer::deleteToken(int index)
  * retry.
  */
 void Twitch::Overseer::createClientInstance(
-		int tokenSelected, 
+		Poco::File &tokenSelected, 
 		std::string server,
 		std::string port
 		)
@@ -453,13 +507,13 @@ void Twitch::Overseer::createClientInstance(
 
 
 	// creates a client
-	Clients.push_back(new Twitch::IRCBot(Context, server, port, MasterIRCCorrelator, TokenFiles[tokenSelected].path()));
+	Clients.push_back(new Twitch::IRCBot(Context, server, port, MasterIRCCorrelator, tokenSelected.path()));
 
 	int curClient = Clients.size() - 1;
 
 	cout << "Reading in selected token" << endl;
 	// opens the token file and gets needed data
-	std::ifstream tokenF(TokenFiles[tokenSelected].path());
+	std::ifstream tokenF(tokenSelected.path());
 
 	Twitch::token curTok;
 	tokenF >> curTok;
@@ -472,18 +526,5 @@ void Twitch::Overseer::createClientInstance(
 	Clients[curClient]->giveUsername(curTok.username);
 
 	// starts the client
-	try
-	{
-		Clients[curClient]->start();
-	}
-	catch(const std::runtime_error &e)
-	{
-		// get's e.what into a string
-		std::string what(e.what());
-
-		if (what.substr(0, 12) == "LOGIN_FAILED")
-		{
-
-		}
-	}
+	Clients[curClient]->start();
 }

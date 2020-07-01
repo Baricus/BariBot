@@ -54,6 +54,13 @@ namespace Twitch
 			// a function to renew those tokens as needed (to pass to clients)
 			bool _renewToken(Twitch::token &);
 
+			// a function to spawn threads from to run the IO context
+			void _runContext();
+
+			// strings containing the server and port to connect to
+			const std::string Server = "irc.chat.twitch.tv";
+			const std::string Port = "6667";
+
 		public:			
 			// constructor, destructor
 			Overseer();
@@ -66,7 +73,7 @@ namespace Twitch
 			// Returns a pair for easy insertion into the map
 			//
 			// May become a private function or change return type to just the token
-			void createClientInstance(int tokenSelected, std::string server, std::string port);
+			void createClientInstance(Poco::File &tokenSelected, std::string server, std::string port);
 
 			// a function to create a token file
 			void createToken(std::istream &in, Poco::File &dir);
