@@ -89,6 +89,7 @@ namespace Twitch
 			// starts the event handle loop
 			void start();
 
+			// TODO - move to constructor?
 			// Setup functions that must be run before calling start
 			// Provides a token to the bot for authentification.
 			void giveToken(std::string tok);

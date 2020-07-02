@@ -116,9 +116,11 @@ void Twitch::IRCBot::_connect(long delay)
 // to handle commands
 void Twitch::IRCBot::start()
 {
-	// queues up a first write for the password and nickname
+	// queues up a first write for capability requesting, password (oauth), and nickname
 	asio::async_write(TCPsocket, 
-			asio::buffer("PASS oauth:" + Token + "\r\nNICK " + Username + "\r\n"),
+			asio::buffer("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership\r\n"
+						 "PASS oauth:" + Token + "\r\n"
+						 "NICK " + Username + "\r\n"),
 			asio::bind_executor(_Strand,
 
 				// lambda to call after write completes
@@ -139,6 +141,10 @@ void Twitch::IRCBot::start()
 									this->_onMessage(e, size);
 								}
 								));
+
+						// write messages to join the necessary twitch chat(s)
+						// temporary fix while determining best practice for storage of channels
+						write("JOIN #baricus");	
 					}
 				}
 			));
