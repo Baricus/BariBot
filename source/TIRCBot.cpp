@@ -39,6 +39,7 @@ using std::endl;
 // at the same time, each client get's its own strand.  
 Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string portNum,
 		IRCCorrelator &IRCCor,
+		CommandCorrelator &Comms,
 		const Poco::Path filePath)
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
@@ -46,7 +47,8 @@ Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string 
 		IPresolver(context), TCPsocket(context),
 		inString(new std::string()), inBuffer(*inString),
 		Path(filePath),
-		IRC(IRCCor)
+		IRC(IRCCor),
+		Commands(Comms)
 {
 	_connect();
 }
@@ -284,6 +286,8 @@ void Twitch::IRCBot::giveUsername(std::string user)
 // the TCP socket (and properly logs it)
 void Twitch::IRCBot::write(const std::string messageString)
 {
+	std::cout << "***WRITING MESSAGE: " << messageString << std::endl;
+
 	// the buffer needs a string which is gaurenteed to be in scope, so
 	// we re-allocate on the heap as a string
 	//

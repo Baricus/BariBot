@@ -507,7 +507,11 @@ void Twitch::Overseer::createClientInstance(
 
 
 	// creates a client
-	Clients.push_back(new Twitch::IRCBot(Context, server, port, MasterIRCCorrelator, tokenSelected.path()));
+	Clients.push_back(
+			new Twitch::IRCBot(Context, server, port, 
+							   MasterIRCCorrelator, 
+							   MasterCommandCorrelator,
+							   tokenSelected.path()));
 
 	int curClient = Clients.size() - 1;
 

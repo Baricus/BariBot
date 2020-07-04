@@ -28,6 +28,8 @@
 // TODO - delete
 #include <iostream>
 
+#include <regex>
+
 // the constructor which populates the map
 Twitch::IRCCorrelator::IRCCorrelator()
 {
@@ -73,6 +75,52 @@ Twitch::IRCCorrelator::IRCCorrelator()
 		// queues an output
 		Caller->write("PONG :" + Sm[5].str());
 
+		// temporary write
+		Caller->write("PRIVMSG #baricus :Hi!  This is a Bot (not the streamer, just whats typing) that I'm working on.  I'm currently working on setting up actual commands and I thought I might as well stream it.  ");
+
 		return true;
+	};
+
+
+	// PRIVMSG
+	//
+	// PRIVMSG is (since this is a client) a message sent to us,
+	// either because it was sent into a channel, or sent directly.
+	//
+	SFM["PRIVMSG"] = [](std::smatch &sm, Twitch::IRCBot *Caller) -> bool
+	{
+		static const std::regex CommandMatch(R"(!(\w+)\s*(.*))", std::regex_constants::ECMAScript | std::regex_constants::optimize);
+
+		// copy message body for static use matching
+		std::string message(sm[5].str());
+
+		std::smatch commandStringMatch;
+			
+		// if we have a command
+		if(std::regex_match(message, commandStringMatch, CommandMatch))
+		{
+			auto iter = Caller->Commands.SFM.find(commandStringMatch[1].str());
+
+			// if command doesn't exist
+			if (iter == Caller->Commands.SFM.end())
+			{
+				// TODO - decide if I should do something
+			}
+			else
+			{
+				//if command returns false
+				if(!iter->second(sm, commandStringMatch, Caller))
+				{
+					// TODO - log
+				}
+				else
+				{
+					// TODO - log
+				}
+			}
+		}
+
+		return true;
+
 	};
 }

@@ -26,6 +26,7 @@
 #include "TIRCBot.hpp"
 
 #include "IRCCorrelator.hpp"
+#include "CommandCorrelator.hpp"
 
 namespace Twitch
 {
@@ -48,8 +49,10 @@ namespace Twitch
 			// client ID and secret
 			std::string ClientID, ClientSecret;
 
-			// a helper to pass to ALL instances (unmodified) to handle each IRC command
+			// helpers to pass to ALL instances (unmodified) to handle each IRC command
+			// and user command
 			IRCCorrelator MasterIRCCorrelator;
+			CommandCorrelator MasterCommandCorrelator;
 	
 			// a function to renew those tokens as needed (to pass to clients)
 			bool _renewToken(Twitch::token &);

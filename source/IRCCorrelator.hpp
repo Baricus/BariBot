@@ -21,8 +21,8 @@
  * can be created and used within them.
  */
 
-#ifndef IRC_CORRELATOR
-#define IRC_CORRELATOR
+#ifndef TWITCH_IRC_CORRELATOR
+#define TWITCH_IRC_CORRELATOR
 
 #include <map>		//...map
 #include <string>	//...string

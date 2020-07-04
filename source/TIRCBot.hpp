@@ -26,6 +26,8 @@
 // analysis of IRC commands
 #include "IRCCorrelator.hpp"
 
+// analysis of user commands
+#include "CommandCorrelator.hpp"
 
 namespace Twitch
 {
@@ -70,6 +72,9 @@ namespace Twitch
 			// a helper that correlates IRC commands to functions
 			IRCCorrelator &IRC;
 
+			// a helper that correlates USER commands to functions
+			CommandCorrelator &Commands;
+
 			// private functions
 			
 			// Connection related functions
@@ -82,6 +87,7 @@ namespace Twitch
 			// constructor
 			IRCBot(asio::io_context &context, std::string server, std::string portNum,
 					IRCCorrelator &IRCCor,
+					CommandCorrelator &Comms,
 					const Poco::Path filePath);
 			// destrcutor
 			virtual ~IRCBot();
