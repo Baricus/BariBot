@@ -42,8 +42,10 @@ namespace Twitch
 
 			// a vector of Token files
 			std::vector<Poco::File> TokenFiles;
+			// the token folder that those tokens are in
+			Poco::Path TokenPath;
 
-			// a map of token files to IRCclients to enable easy correlation
+			// Client list
 			std::vector<Twitch::IRCBot *> Clients;
 
 			// client ID and secret
@@ -64,6 +66,9 @@ namespace Twitch
 			const std::string Server = "irc.chat.twitch.tv";
 			const std::string Port = "6667";
 
+			// path to credentials
+			Poco::Path CredsPath;
+
 		public:			
 			// constructor, destructor
 			Overseer();
@@ -79,12 +84,15 @@ namespace Twitch
 			void createClientInstance(Poco::File &tokenSelected, std::string server, std::string port);
 
 			// a function to create a token file
-			void createToken(std::istream &in, Poco::File &dir);
+			void createToken(std::istream &in, Poco::Path &dir);
 
 			// a function to delete a token file and update the list of tokens accordingly
 			void deleteToken(int index);
 
-			// function to start the overseer
+			// function to startup baribot
+			void init();
+
+			// client management IO loop
 			void run();
 	};
 }

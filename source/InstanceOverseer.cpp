@@ -42,10 +42,18 @@
  *
  * starts a IO work to prevent stoppage
  *
+ * and sets up filesystem
+ *
  */
 Twitch::Overseer::Overseer() : work(make_work_guard(Context))
 {
-		
+	// path to tokens
+	TokenPath = Poco::Path(false);
+	TokenPath.pushDirectory(".Tokens");	
+
+	// credentials
+	CredsPath = Poco::Path(false);
+	CredsPath.pushDirectory(".AppCredentials");
 }
 
 
@@ -208,16 +216,15 @@ void Twitch::Overseer::setAppCreds(std::string id, std::string secret)
 }
 
 
-
-/* run
+/* init
  *
- * run loads in all pre-existing tokens, etc
- * and then starts an I/O loop to allow for
- * the launching and stopping of client
- * instances and token management.
+ * init loads in credentials, pre-existing token and client data
+ * and everything else needed for operation.  It effectively
+ * initializes the "state" of the overseer to whatever it was
+ * on the previous use.
  *
  */
-void Twitch::Overseer::run()
+void Twitch::Overseer::init()
 {
 	using std::cout;
 	using std::cin;
@@ -227,9 +234,8 @@ void Twitch::Overseer::run()
 
 	cout << "Searching for stored credentials..." << endl;
 
-	Poco::Path credsPath(false);
-	credsPath.pushDirectory(".AppCredentials");
-	Poco::File credsFile(credsPath);
+	// creates file and grabs data if found
+	Poco::File credsFile(CredsPath);
 
 	std::string ID, secret;
 
@@ -267,15 +273,10 @@ void Twitch::Overseer::run()
 	cout << "Setting credentials..." << endl;
 	setAppCreds(ID, secret);
 
-
 	cout << "Searching for stored tokens..." << endl;
 
-	// generate path to tokens
-	Poco::Path tokenPath(false);
-	tokenPath.pushDirectory(".tokens");
-
 	// search every token in the folder
-	Poco::File tokenFolder(tokenPath);
+	Poco::File tokenFolder(TokenPath);
 	if (!tokenFolder.exists())
 	{
 		cout << "No token Directory found, creating" << endl;
@@ -303,6 +304,26 @@ void Twitch::Overseer::run()
 		// runs context with new threads
 		Threads.push_back(std::thread(&Twitch::Overseer::_runContext, this));
 	}
+}
+
+
+
+/* run
+ *
+ * run loads in all pre-existing tokens, etc
+ * and then starts an I/O loop to allow for
+ * the launching and stopping of client
+ * instances and token management.
+ *
+ */
+void Twitch::Overseer::run()
+{
+	using std::cout;
+	using std::cin;
+	using std::endl;
+
+	// initalizes the overseer
+	this->init();
 
 	// a lambda to print tokens
 	auto printTokens = [&](std::string request, bool shouldPrompt=false) -> int
@@ -369,7 +390,7 @@ void Twitch::Overseer::run()
 				printTokens("Current tokens:");	
 				break;
 			case 2:
-				createToken(cin, tokenFolder);
+				createToken(cin, TokenPath);
 				break;
 
 			case 3:
@@ -407,7 +428,7 @@ void Twitch::Overseer::run()
  * to the list of eligable tokens
  *
  */
-void Twitch::Overseer::createToken(std::istream &in, Poco::File &dir)
+void Twitch::Overseer::createToken(std::istream &in, Poco::Path &dir)
 {
 	using std::cout;
 	using std::endl;
@@ -420,7 +441,7 @@ void Twitch::Overseer::createToken(std::istream &in, Poco::File &dir)
 	in >> fileName;
 
 	// creates new file
-	Poco::Path path(dir.path(), fileName + ".tok");
+	Poco::Path path(dir, fileName + ".tok");
 	Poco::File newToken(path);
 
 	if (newToken.exists())
