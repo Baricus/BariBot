@@ -300,19 +300,19 @@ void Twitch::Overseer::init()
 	cout << "Searching for stored clients..." << endl;
 
 	// checks if client folder exists and if so, searches for clients within it
-	if (ClientPath.isFile())
-	{
-		throw std::runtime_error("Client Folder exists as a file");
-	}
-	else if (!ClientPath.isDirectory())
+	Poco::File clientFolder(ClientPath);
+	if (!clientFolder.exists())
 	{
 		cout << "No client folder found; creating..." << endl;
 		ClientPath.makeDirectory();
 	}
+	else if (clientFolder.isFile())
+	{
+		throw std::runtime_error("A file with the same name as the client folder exists");
+	}
 	// if we actually have clients, grab them all
 	else
 	{
-		Poco::File clientFolder(ClientPath);
 		clientFolder.list(StoredClients);
 
 		cout << "Found " << StoredClients.size() << " stored clients" << endl;	
