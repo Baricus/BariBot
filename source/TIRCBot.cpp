@@ -93,7 +93,6 @@ void Twitch::IRCBot::_connect(long delay)
 		TCPsocket.close();
 		TCPsocket = asio::ip::tcp::socket(Context);
 
-		std::cout << "Retry wait time: " <<delay << std::endl;
 		// if we hit an arbitrary limit on time, just throw
 		if (delay > 1000)
 			throw std::runtime_error("Could not connect");
@@ -215,7 +214,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	else // we have a good line
 	{
 		cout << "GOOD LINE: " << sm[0];
-		cout << "Separated: " << sm[1] << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
+		cout << "Separated: " << sm[1]  << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
 
 		// to handle commands, we use the IRC Correlator to find the proper function
 		auto iter = IRC.SFM.find(sm[3].str());

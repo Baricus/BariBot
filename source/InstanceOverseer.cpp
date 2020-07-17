@@ -6,7 +6,6 @@
  *
  */
 
-
 #include "InstanceOverseer.hpp"
 #include "TIRCBot.hpp"
 
@@ -54,6 +53,10 @@ Twitch::Overseer::Overseer() : work(make_work_guard(Context))
 	// credentials
 	CredsPath = Poco::Path(false);
 	CredsPath.pushDirectory(".AppCredentials");
+
+	// clients
+	ClientPath = Poco::Path(false);
+	ClientPath.pushDirectory(".Clients");
 }
 
 
@@ -196,7 +199,7 @@ void Twitch::Overseer::_runContext()
 						output.close();
 
 						// create a new client
-						createClientInstance(expiredToken, Server, Port);
+						launchClientInstance(expiredToken, Server, Port);
 					}
 				}
 			}
@@ -294,6 +297,27 @@ void Twitch::Overseer::init()
 		cout << "Found " << TokenFiles.size() << " token files" << endl;
 	}
 
+	cout << "Searching for stored clients..." << endl;
+
+	// checks if client folder exists and if so, searches for clients within it
+	if (ClientPath.isFile())
+	{
+		throw std::runtime_error("Client Folder exists as a file");
+	}
+	else if (!ClientPath.isDirectory())
+	{
+		cout << "No client folder found; creating..." << endl;
+		ClientPath.makeDirectory();
+	}
+	// if we actually have clients, grab them all
+	else
+	{
+		Poco::File clientFolder(ClientPath);
+		clientFolder.list(StoredClients);
+
+		cout << "Found " << StoredClients.size() << " stored clients" << endl;	
+	}
+
 	// get's a number of threads
 	cout << "Please input a number of threads to work IO: " << endl << "> ";
 	int threadCount;
@@ -371,16 +395,17 @@ void Twitch::Overseer::run()
 	do
 	{
 		// prompt (for now, very simplistic)
-		cout << "***Please select an option***"    << endl
-			 << "\t0 - Exit"                       << endl
-			 << endl
-			 << "\t1 - List all Tokens"            << endl
-			 << "\t2 - Add a new token"            << endl
-			 << "\t3 - Delete an existing token"   << endl
-			 << endl
-			 << "\t4 - Create new client instance" << endl
-			 << "\t5 - Stop client instance"       << endl;
-		cout << "> ";
+		cout  << "***Please select an option***"      << endl
+			  << "\t0 - Exit"                         << endl
+			  << endl
+			  << "\t1 - List all Tokens"              << endl
+			  << "\t2 - Add a new token"              << endl
+			  << "\t3 - Delete an existing token"     << endl
+			  << endl
+			  << "\t4 - Create a new client Instance" << endl
+			  << "\t5 - Launch a client instance"     << endl
+			  << "\t6 - Stop client instance"         << endl;
+		cout  << "> ";
 		cin >> menuChoice;
 
 		// execute based on instructions
@@ -401,13 +426,17 @@ void Twitch::Overseer::run()
 				break;
 
 			case 4:
-				if ((selection = printTokens("Choose a token to use:", true)) == -1)
-					break;
 
-				createClientInstance(TokenFiles[selection], Server, Port);
 				break;
 
 			case 5:
+				if ((selection = printTokens("Choose a token to use:", true)) == -1)
+					break;
+
+				launchClientInstance(TokenFiles[selection], Server, Port);
+				break;
+
+			case 6:
 				
 				break;
 
@@ -508,7 +537,7 @@ void Twitch::Overseer::deleteToken(int index)
 }
 
 
-/* createClientInstance
+/* launchClientInstance
  *
  * createInstance creates a new TwitchIRC client instance
  * and binds it to the current token to return.  
@@ -517,7 +546,7 @@ void Twitch::Overseer::deleteToken(int index)
  * which is caught here.  This prompts a token renewal and a
  * retry.
  */
-void Twitch::Overseer::createClientInstance(
+void Twitch::Overseer::launchClientInstance(
 		Poco::File &tokenSelected, 
 		std::string server,
 		std::string port

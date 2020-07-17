@@ -45,8 +45,14 @@ namespace Twitch
 			// the token folder that those tokens are in
 			Poco::Path TokenPath;
 
-			// Client list
+			// stored client list
+			std::vector<Poco::File> StoredClients;
+
+			// Running client list
 			std::vector<Twitch::IRCBot *> Clients;
+
+			// a path to a folder of clients (each a folder)
+			Poco::Path ClientPath;
 
 			// client ID and secret
 			std::string ClientID, ClientSecret;
@@ -81,7 +87,7 @@ namespace Twitch
 			// Returns a pair for easy insertion into the map
 			//
 			// May become a private function or change return type to just the token
-			void createClientInstance(Poco::File &tokenSelected, std::string server, std::string port);
+			void launchClientInstance(Poco::File &tokenSelected, std::string server, std::string port);
 
 			// a function to create a token file
 			void createToken(std::istream &in, Poco::Path &dir);
