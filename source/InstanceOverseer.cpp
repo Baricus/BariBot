@@ -427,6 +427,7 @@ void Twitch::Overseer::run()
 
 			case 4:
 
+
 				break;
 
 			case 5:
@@ -539,7 +540,7 @@ void Twitch::Overseer::deleteToken(int index)
 
 /* launchClientInstance
  *
- * createInstance creates a new TwitchIRC client instance
+ * creates a new TwitchIRC client instance
  * and binds it to the current token to return.  
  *
  * If the token is invalid, the client throws an authentication error
@@ -581,4 +582,40 @@ void Twitch::Overseer::launchClientInstance(
 
 	// starts the client
 	Clients[curClient]->start();
+}
+
+
+/* createClient
+ *
+ * generates a new client structure and adds it to the list
+ * of launchable clients
+ * 
+ */
+bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &token)
+{
+	// creates a new folder within the clients folder
+	Poco::Path newClientPath(ClientPath);
+	newClientPath.pushDirectory(name);
+	
+	Poco::File newClientFile(newClientPath);
+
+	// existing client/file/etc
+	if (newClientFile.exists())
+	{
+		
+		return false;
+	}
+
+	newClientFile.createDirectory();
+
+	// creates a link to the provided token file
+	Poco::Path tokenPath(newClientPath);
+	tokenPath.pushDirectory("linkedToken");
+
+	Poco::File tokenFile(tokenPath);
+	tokenFile.linkTo(token.path().c_str(), tokenFile.LINK_HARD); // hard link to prevent delete
+
+
+
+	return true;
 }
