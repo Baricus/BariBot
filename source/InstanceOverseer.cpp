@@ -304,7 +304,7 @@ void Twitch::Overseer::init()
 	if (!clientFolder.exists())
 	{
 		cout << "No client folder found; creating..." << endl;
-		ClientPath.makeDirectory();
+		clientFolder.createDirectory();
 	}
 	else if (clientFolder.isFile())
 	{
@@ -392,6 +392,7 @@ void Twitch::Overseer::run()
 
 
 	int menuChoice, selection;
+	std::string name;
 	do
 	{
 		// prompt (for now, very simplistic)
@@ -426,8 +427,15 @@ void Twitch::Overseer::run()
 				break;
 
 			case 4:
+				if ((selection = printTokens("Choose a token to use:", true)) == -1)
+					break;
 
+				// this is breaking somehow
+				cout << "Choose a name for this client: " << endl;
+				std::cin >> name;
+				std::cin.clear();
 
+				createClient(name, TokenFiles[selection]);
 				break;
 
 			case 5:
@@ -587,7 +595,7 @@ void Twitch::Overseer::launchClientInstance(
 
 /* createClient
  *
- * generates a new client structure and adds it to the list
+ * generates a new client folder and adds it to the list
  * of launchable clients
  * 
  */
@@ -596,13 +604,13 @@ bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &t
 	// creates a new folder within the clients folder
 	Poco::Path newClientPath(ClientPath);
 	newClientPath.pushDirectory(name);
+	newClientPath.makeDirectory();
 	
 	Poco::File newClientFile(newClientPath);
 
 	// existing client/file/etc
 	if (newClientFile.exists())
-	{
-		
+	{		
 		return false;
 	}
 
@@ -613,9 +621,8 @@ bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &t
 	tokenPath.pushDirectory("linkedToken");
 
 	Poco::File tokenFile(tokenPath);
-	tokenFile.linkTo(token.path().c_str(), tokenFile.LINK_HARD); // hard link to prevent delete
 
-
+	token.linkTo(tokenFile.path(), token.LINK_HARD);
 
 	return true;
 }
