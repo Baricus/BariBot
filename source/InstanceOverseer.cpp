@@ -597,6 +597,9 @@ void Twitch::Overseer::launchClientInstance(
  *
  * generates a new client folder and adds it to the list
  * of launchable clients
+ *
+ * All clients use the same logs and other files as convention
+ * so we create all of them now just in case.
  * 
  */
 bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &token)
@@ -616,13 +619,17 @@ bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &t
 
 	newClientFile.createDirectory();
 
+	// grabs the path to the folder for later use
+	std::string folder = newClientFile.path();
+
 	// creates a link to the provided token file
-	Poco::Path tokenPath(newClientPath);
-	tokenPath.pushDirectory("linkedToken");
+	token.linkTo(folder + "/linkedToken.tok", token.LINK_HARD);
 
-	Poco::File tokenFile(tokenPath);
+	// creates other files
 
-	token.linkTo(tokenFile.path(), token.LINK_HARD);
+	std::ofstream 	log(folder + "/log.txt"), 
+				 	disabled(folder + "/disabledCommands.txt"),
+					custome(folder + "/customCommands.txt");
 
 	return true;
 }
