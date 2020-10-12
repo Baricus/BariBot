@@ -106,7 +106,7 @@ void Twitch::IRCBot::_connect(long delay)
 }
 
 
-// _start
+// start
 //
 // start binds and initalizes the handlers for each client.
 // 
@@ -137,6 +137,7 @@ void Twitch::IRCBot::start()
 							this->inBuffer, 
 							'\n', 
 							asio::bind_executor(_Strand,
+								// lambda to call the onMessage function
 								[this](const asio::error_code &e, size_t size)
 								{
 									this->_onMessage(e, size);
@@ -145,7 +146,7 @@ void Twitch::IRCBot::start()
 
 						// write messages to join the necessary twitch chat(s)
 						// temporary fix while determining best practice for storage of channels
-						write("JOIN #baricus");	
+						write("JOIN #baricus");
 					}
 				}
 			));
@@ -213,6 +214,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	}
 	else // we have a good line
 	{
+		// TODO fix logging here
 		cout << "GOOD LINE: " << sm[0];
 		cout << "Separated: " << sm[1]  << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
 

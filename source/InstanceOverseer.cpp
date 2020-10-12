@@ -412,41 +412,40 @@ void Twitch::Overseer::run()
 		// execute based on instructions
 		switch(menuChoice)
 		{
-			case 1:
+			case 1: // list tokens
 				printTokens("Current tokens:");	
 				break;
-			case 2:
+			case 2: // add token
 				createToken(cin, TokenPath);
 				break;
 
-			case 3:
+			case 3: // delete token
 				if ((selection = printTokens("Choose a token to delete:", true)) == -1)
 					break;
 
 				deleteToken(selection);
 				break;
 
-			case 4:
+			case 4: // create new client
 				if ((selection = printTokens("Choose a token to use:", true)) == -1)
 					break;
 
-				// this is breaking somehow
 				cout << "Choose a name for this client: " << endl;
-				std::cin >> name;
-				std::cin.clear();
+				std::getline(cin, name);
 
 				createClient(name, TokenFiles[selection]);
 				break;
 
-			case 5:
+			case 5: // launch client
 				if ((selection = printTokens("Choose a token to use:", true)) == -1)
 					break;
 
 				launchClientInstance(TokenFiles[selection], Server, Port);
 				break;
 
-			case 6:
+			case 6: // stop client
 				
+
 				break;
 
 			default:
@@ -608,7 +607,7 @@ bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &t
 	Poco::Path newClientPath(ClientPath);
 	newClientPath.pushDirectory(name);
 	newClientPath.makeDirectory();
-	
+
 	Poco::File newClientFile(newClientPath);
 
 	// existing client/file/etc
@@ -625,11 +624,11 @@ bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &t
 	// creates a link to the provided token file
 	token.linkTo(folder + "/linkedToken.tok", token.LINK_HARD);
 
-	// creates other files
+	// creates other files (destructed so auto closed)
 
 	std::ofstream 	log(folder + "/log.txt"), 
 				 	disabled(folder + "/disabledCommands.txt"),
-					custome(folder + "/customCommands.txt");
+					custom(folder + "/customCommands.txt");
 
 	return true;
 }
