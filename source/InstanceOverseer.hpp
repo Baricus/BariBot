@@ -83,11 +83,11 @@ namespace Twitch
 			// function to set ClientID and Client Secret
 			void setAppCreds(std::string ID, std::string secret);
 
-			// on to generate a new client instance
-			bool createClient(const std::string &name, const Poco::File &token);
+			// function to generate a new client instance
+			bool createClient(std::istream &in, const Poco::File &token);
 
 			// function to create a new instance from a token.
-			void launchClientInstance(Poco::File &tokenSelected, std::string server, std::string port);
+			void launchClientInstance(Poco::File &ClientDir, std::string server, std::string port);
 
 			// a function to create a token file
 			void createToken(std::istream &in, Poco::Path &dir);

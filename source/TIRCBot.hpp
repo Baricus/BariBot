@@ -8,20 +8,21 @@
 #ifndef TWITCH_TIRCBOT
 #define TWITCH_TIRCBOT
 
-#include <asio/buffer.hpp>
-#include <asio/io_context.hpp>
-
 #include <Poco/Path.h>
 
 #include <cstdlib>
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
 
 // for smatch
 #include <regex>
 
 #include <asio.hpp>
+
+// tokens
+#include "token.hpp"
 
 // analysis of IRC commands
 #include "IRCCorrelator.hpp"
@@ -60,20 +61,23 @@ namespace Twitch
 			<std::string::value_type, std::string::traits_type, std::string::allocator_type>
 				inBuffer;
 
+
 			// All non-network related members
 
 			// token file reference for thrown error
 			const Poco::Path Path;
 
+			// log filestream
+			std::ofstream log;
+
 			// Auth Token and username (stored in case of reconnection)
-			std::string Token;
-			std::string Username;
+			Twitch::token Token;
 
 			// a helper that correlates IRC commands to functions
 			IRCCorrelator &IRC;
 
 			// a helper that correlates USER commands to functions
-			CommandCorrelator &Commands;
+			CommandCorrelator Commands;
 
 			// private functions
 			
@@ -88,18 +92,12 @@ namespace Twitch
 			IRCBot(asio::io_context &context, std::string server, std::string portNum,
 					IRCCorrelator &IRCCor,
 					CommandCorrelator &Comms,
-					const Poco::Path filePath);
+					const Poco::Path dirPath);
 			// destrcutor
 			virtual ~IRCBot();
 
 			// starts the event handle loop
 			void start();
-
-			// TODO - move to constructor?
-			// Setup functions that must be run before calling start
-			// Provides a token to the bot for authentification.
-			void giveToken(std::string tok);
-			void giveUsername(std::string user);
 
 			// function to write lines to the socket
 			void write(const std::string messageString);

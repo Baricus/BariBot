@@ -37,20 +37,47 @@ using std::endl;
 //
 // To ensure each client cannot read and write to the server
 // at the same time, each client get's its own strand.  
-Twitch::IRCBot::IRCBot(asio::io_context &context, std::string serv, std::string portNum,
+Twitch::IRCBot::IRCBot(
+		asio::io_context &context, 
+		std::string serv, 
+		std::string portNum,
 		IRCCorrelator &IRCCor,
 		CommandCorrelator &Comms,
-		const Poco::Path filePath)
+		const Poco::Path dirPath)
+	
 	:	Context(context),
 		Server(serv), PortNumber(portNum),
 		_Strand(asio::make_strand(context)),
 		IPresolver(context), TCPsocket(context),
-		inString(new std::string()), inBuffer(*inString),
-		Path(filePath),
+		inString(new std::string()), 
+		inBuffer(*inString),
+		Path(dirPath),
 		IRC(IRCCor),
 		Commands(Comms)
 {
+	// opens log file
+	auto logPath = dirPath;
+	logPath.append("log.txt");
+
+	cout << logPath.toString();
+	log = std::ofstream(logPath.toString(), std::ios_base::app);
+	log << "Client startup" << endl;
+
+	// load token from file
+	auto tokenPath = dirPath;
+	tokenPath.append("token.tok");
+
+	std::ifstream input(tokenPath.toString());
+
+	input >> Token;
+
+	input.close();
+
+	// connects bot after everything is set
 	_connect();
+
+	// starts client once connected
+	start();
 }
 
 
@@ -94,7 +121,7 @@ void Twitch::IRCBot::_connect(long delay)
 		TCPsocket = asio::ip::tcp::socket(Context);
 
 		// if we hit an arbitrary limit on time, just throw
-		if (delay > 1000)
+		if (delay > 100)
 			throw std::runtime_error("Could not connect");
 
 		// if we failed to connect, retry on a falloff timer
@@ -120,8 +147,8 @@ void Twitch::IRCBot::start()
 	// queues up a first write for capability requesting, password (oauth), and nickname
 	asio::async_write(TCPsocket, 
 			asio::buffer("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership\r\n"
-						 "PASS oauth:" + Token + "\r\n"
-						 "NICK " + Username + "\r\n"),
+						 "PASS oauth:" + Token.accessToken + "\r\n"
+						 "NICK " + Token.username + "\r\n"),
 			asio::bind_executor(_Strand,
 
 				// lambda to call after write completes
@@ -146,6 +173,7 @@ void Twitch::IRCBot::start()
 
 						// write messages to join the necessary twitch chat(s)
 						// temporary fix while determining best practice for storage of channels
+						// TODO replace
 						write("JOIN #baricus");
 					}
 				}
@@ -249,35 +277,6 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 					this->_onMessage(e, size);
 				}
 				));
-}
-
-
-// giveToken
-//
-// giveToken is a standard "set" function to
-// provide the instance with it's login token.
-//
-// This is used in authentificiation with Twitch's
-// servers
-void Twitch::IRCBot::giveToken(std::string tok)
-{
-	// TODO Error checking (look up twitch token requirements)
-
-	Token = tok;
-}
-
-
-// giveUsername
-//
-// giveUsername is a "set" function to provide
-// the instance with it's login username.
-//
-// This is used to authenticate with Twitch servers
-void Twitch::IRCBot::giveUsername(std::string user)
-{
-	// TODO Error checking (not really necessary, but helpful)
-	
-	Username = user;
 }
 
 

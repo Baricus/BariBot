@@ -30,6 +30,7 @@
 
 #include <asio/executor_work_guard.hpp>
 #include <cstdlib>
+#include <ios>
 #include <iostream>
 #include <istream>
 #include <fstream>
@@ -369,6 +370,8 @@ void Twitch::Overseer::run()
 			cout << "> ";
 			int input;
 			cin >> input;
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			cin.clear();
 
 			// error check
 			if (input > TokenFiles.size() || input < 1)
@@ -384,6 +387,44 @@ void Twitch::Overseer::run()
 			return 0;
 		}
 	};
+	
+	auto printClients = [&](std::string request, bool shouldPrompt=false) -> int
+	{
+		// check to ensure we have values
+		if (StoredClients.size() == 0)
+		{
+			cout << "ERROR: No saved clients" << endl;
+			return -1;
+		}
+
+		cout << request << endl;
+		for (int i = 0; i < StoredClients.size(); i++)
+			cout << "\t" << (i+1) << " - " << 
+				Poco::Path(StoredClients[i].path()).getFileName() << endl;
+
+		if (shouldPrompt)
+		{
+			cout << "> ";
+			int input;
+			cin >> input;
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			cin.clear();
+
+			// error check
+			if (input > StoredClients.size() || input < 1)
+			{
+				cout << "ERROR: out of bounds" << endl;
+				return -1;
+			}
+
+			return input-1;
+		}
+		else
+		{
+			return 0;
+		}
+	};
+
 
 	cout << "Starting I/O loop" << endl << endl;
 	
@@ -392,7 +433,6 @@ void Twitch::Overseer::run()
 
 
 	int menuChoice, selection;
-	std::string name;
 	do
 	{
 		// prompt (for now, very simplistic)
@@ -403,11 +443,14 @@ void Twitch::Overseer::run()
 			  << "\t2 - Add a new token"              << endl
 			  << "\t3 - Delete an existing token"     << endl
 			  << endl
-			  << "\t4 - Create a new client Instance" << endl
-			  << "\t5 - Launch a client instance"     << endl
-			  << "\t6 - Stop client instance"         << endl;
+			  << "\t4 - List all stored Clients"	  << endl
+			  << "\t5 - Create a new client Instance" << endl
+			  << "\t6 - Launch a client instance"     << endl
+			  << "\t7 - Stop client instance"         << endl;
 		cout  << "> ";
 		cin >> menuChoice;
+		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		cin.clear();
 
 		// execute based on instructions
 		switch(menuChoice)
@@ -426,24 +469,25 @@ void Twitch::Overseer::run()
 				deleteToken(selection);
 				break;
 
-			case 4: // create new client
+			case 4: // list  clients
+				printClients("Stored Clients:");
+				break;
+
+			case 5: // create new client
 				if ((selection = printTokens("Choose a token to use:", true)) == -1)
 					break;
 
-				cout << "Choose a name for this client: " << endl;
-				std::getline(cin, name);
-
-				createClient(name, TokenFiles[selection]);
+				createClient(cin, TokenFiles[selection]);
 				break;
 
-			case 5: // launch client
-				if ((selection = printTokens("Choose a token to use:", true)) == -1)
+			case 6: // launch client
+				if ((selection = printClients("Choose a client to launch:", true)) == -1)
 					break;
 
-				launchClientInstance(TokenFiles[selection], Server, Port);
+				launchClientInstance(StoredClients[selection], Server, Port);
 				break;
 
-			case 6: // stop client
+			case 7: // stop client
 				
 
 				break;
@@ -507,7 +551,7 @@ void Twitch::Overseer::createToken(std::istream &in, Poco::Path &dir)
 	// scopes
 	cout << "Enter the list of scopes: ";
 	// uses getline to ensure we don't cause issues with multi-word scopes
-	std::getline(in, scopes); // clears previous \n
+	in.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	std::getline(in, scopes);
 	scopes.pop_back(); // \n
 
@@ -553,42 +597,22 @@ void Twitch::Overseer::deleteToken(int index)
  * If the token is invalid, the client throws an authentication error
  * which is caught here.  This prompts a token renewal and a
  * retry.
+ *
+ * TODO add async connection to ensure that we don't block main thread
+ * 			- likely one extra thread dedicated to launching clients
  */
 void Twitch::Overseer::launchClientInstance(
-		Poco::File &tokenSelected, 
+		Poco::File &clientDir, 
 		std::string server,
 		std::string port
 		)
 {
-	using std::cout;
-	using std::endl;
-
-
 	// creates a client
 	Clients.push_back(
 			new Twitch::IRCBot(Context, server, port, 
 							   MasterIRCCorrelator, 
 							   MasterCommandCorrelator,
-							   tokenSelected.path()));
-
-	int curClient = Clients.size() - 1;
-
-	cout << "Reading in selected token" << endl;
-	// opens the token file and gets needed data
-	std::ifstream tokenF(tokenSelected.path());
-
-	Twitch::token curTok;
-	tokenF >> curTok;
-	tokenF.close();
-
-	cout << "Passing token to client" << endl;
-
-	// set's up client
-	Clients[curClient]->giveToken(curTok.accessToken);
-	Clients[curClient]->giveUsername(curTok.username);
-
-	// starts the client
-	Clients[curClient]->start();
+							   clientDir.path()));
 }
 
 
@@ -601,8 +625,13 @@ void Twitch::Overseer::launchClientInstance(
  * so we create all of them now just in case.
  * 
  */
-bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &token)
+bool Twitch::Overseer::createClient(std::istream &in, const Poco::File &token)
 {
+	// gets name from input stream
+	std::string name;
+	std::cout << "Choose a name for this client: " << std::endl;
+	std::getline(in, name);
+
 	// creates a new folder within the clients folder
 	Poco::Path newClientPath(ClientPath);
 	newClientPath.pushDirectory(name);
@@ -622,13 +651,19 @@ bool Twitch::Overseer::createClient(const std::string &name, const Poco::File &t
 	std::string folder = newClientFile.path();
 
 	// creates a link to the provided token file
-	token.linkTo(folder + "/linkedToken.tok", token.LINK_HARD);
+	token.linkTo(folder + "/token.tok", token.LINK_HARD);
 
 	// creates other files (destructed so auto closed)
 
 	std::ofstream 	log(folder + "/log.txt"), 
 				 	disabled(folder + "/disabledCommands.txt"),
-					custom(folder + "/customCommands.txt");
+					custom(folder + "/customCommands.txt"),
+					channels(folder + "/channels.txt");
+
+	// TODO -- ADD headers where applicable
+
+	// add this to the list
+	StoredClients.push_back(Poco::File(newClientPath));
 
 	return true;
 }

@@ -27,5 +27,8 @@ int main()
 	// runs it (why did I write this?)
 	BariBot.run();
 
+	// I was told to add more semicolons; this should be plenty
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 	return 0;
 }
