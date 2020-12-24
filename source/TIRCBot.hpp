@@ -67,7 +67,7 @@ namespace Twitch
 			//--------------------------------------------------------
 			// All non-network related members
 
-			// token file reference for thrown error
+			// path to client files
 			const Poco::Path Path;
 
 			// log filestream

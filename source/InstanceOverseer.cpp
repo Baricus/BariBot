@@ -199,7 +199,7 @@ void Twitch::Overseer::_runContext()
 						auto clientPath = e.TokenPath;
 						clientPath.popFrontDirectory();
 						auto clientFile = Poco::File(clientPath);
-
+						std::cout << clientFile.path() << std::endl;
 						// create a new client
 						launchClientInstance(clientFile, Server, Port);
 					}

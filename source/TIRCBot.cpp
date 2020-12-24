@@ -83,6 +83,8 @@ Twitch::IRCBot::IRCBot(
 	
 	input.close();
 
+	log << "Loaded token for login as " << Token.username << endl;
+
 	// connects bot after everything is set
 	_connect();
 
@@ -172,7 +174,7 @@ void Twitch::IRCBot::start()
 					// if nothing goes wrong
 					if (!e)
 					{
-						log  << "Successfull login as "  << Token.username << endl
+						log  << "login info sent as "    << Token.username << endl
 							 << "Scopes requested are: " << endl
 							 << "\t"                     << Token.scopes   << endl;
 
@@ -189,10 +191,22 @@ void Twitch::IRCBot::start()
 								}
 								));
 
-						// write messages to join the necessary twitch chat(s)
-						// temporary fix while determining best practice for storage of channels
-						// TODO replace
-						write("JOIN #baricus");
+						// opens channel lists
+						auto chanPath = Path;
+						chanPath.append("channels.txt");
+
+						std::ifstream in(chanPath.toString());
+
+						// joins each channel in the list
+						std::string channel;
+						int count = 0;
+						while ((in >> channel))
+						{
+							write("JOIN #" + channel);
+							count++;
+						}
+						
+						log << "Joined " << count << " channels" << endl;
 					}
 					else
 					{
