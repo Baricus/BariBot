@@ -87,7 +87,7 @@ namespace Twitch
 			bool createClient(std::istream &in, const Poco::File &token);
 
 			// function to create a new instance from a token.
-			void launchClientInstance(Poco::File &ClientDir, std::string server, std::string port);
+			void launchClientInstance(Poco::File &ClientFile, std::string server, std::string port);
 
 			// a function to create a token file
 			void createToken(std::istream &in, Poco::Path &dir);

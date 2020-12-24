@@ -14,20 +14,24 @@
 #include <asio/read_until.hpp>
 #include <asio/steady_timer.hpp>
 
-// regex for parsing
 #include <exception>
 #include <asio/write.hpp>
+
+// regex for parsing
 #include <regex>
+
+// chrono used for system time
+#include <chrono>
 
 // file input output and cout (cout eventually will be removed in favor of individual logs)
 #include <iostream>
 #include <fstream>
 
 
-//TODO - remove
-using std::cout;
 using std::endl;
 
+using std::chrono::system_clock;
+using std::ctime;
 
 // Constructor
 // 
@@ -59,18 +63,24 @@ Twitch::IRCBot::IRCBot(
 	auto logPath = dirPath;
 	logPath.append("log.txt");
 
-	cout << logPath.toString();
+
 	log = std::ofstream(logPath.toString(), std::ios_base::app);
-	log << "Client startup" << endl;
+
+	auto time = system_clock::to_time_t(system_clock::now());
+
+	log   << endl
+		  << "Client "         << dirPath.getBaseName() << " startup" << endl
+		  << "Log file opened" << endl
+		  << ctime(&time)      << endl
+		  << endl;
 
 	// load token from file
 	auto tokenPath = dirPath;
 	tokenPath.append("token.tok");
-
 	std::ifstream input(tokenPath.toString());
 
 	input >> Token;
-
+	
 	input.close();
 
 	// connects bot after everything is set
@@ -83,11 +93,10 @@ Twitch::IRCBot::IRCBot(
 
 // Destructor
 //
-// this literally just frees one string, because
-// for some reason inString had to be on the heap
-// to make the inBuffer not explode
 Twitch::IRCBot::~IRCBot()
 {
+	log.close();
+
 	delete inString;
 }
 
@@ -107,7 +116,6 @@ void Twitch::IRCBot::_connect(long delay)
 {
 	try
 	{
-
 	// DNS lookup
 	auto endpoints = this->IPresolver.resolve(Server, PortNumber, error);
 
@@ -116,14 +124,19 @@ void Twitch::IRCBot::_connect(long delay)
 	}
 	catch(...)
 	{
+		log << "Connection failed...retrying" << endl;
+
 		// resets the socket
 		TCPsocket.close();
 		TCPsocket = asio::ip::tcp::socket(Context);
 
 		// if we hit an arbitrary limit on time, just throw
 		if (delay > 100)
+		{
+			log << "Failed to connect" << endl;
+			
 			throw std::runtime_error("Could not connect");
-
+		}
 		// if we failed to connect, retry on a falloff timer
 		asio::steady_timer timer(Context, asio::chrono::seconds(delay));
 		timer.wait();
@@ -144,6 +157,8 @@ void Twitch::IRCBot::_connect(long delay)
 // to handle commands
 void Twitch::IRCBot::start()
 {
+	log << "Logging in as " << Token.username << endl;
+
 	// queues up a first write for capability requesting, password (oauth), and nickname
 	asio::async_write(TCPsocket, 
 			asio::buffer("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership\r\n"
@@ -153,11 +168,14 @@ void Twitch::IRCBot::start()
 
 				// lambda to call after write completes
 				[this](const asio::error_code &e, size_t size)
-				{
-				
+				{	
 					// if nothing goes wrong
 					if (!e)
 					{
+						log  << "Successfull login as "  << Token.username << endl
+							 << "Scopes requested are: " << endl
+							 << "\t"                     << Token.scopes   << endl;
+
 						// queue up an asyncronous read over the socket
 						asio::async_read_until(
 							this->TCPsocket, 
@@ -176,6 +194,14 @@ void Twitch::IRCBot::start()
 						// TODO replace
 						write("JOIN #baricus");
 					}
+					else
+					{
+						log  << "Login write failed with error:" << endl
+							 << "\t"                             << e.value()   << endl
+							 << "\t"                             << e.message() << endl;
+
+						//TODO throw error upstream
+					}
 				}
 			));
 }
@@ -190,9 +216,10 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// if we have an error, the socket is likely closed so we'll need a new one
 	if (e)
 	{
-		// TODO - remove
-		cout << "ERROR: " << e.message() << " | " << e.value() << endl;
-		
+		log   << "***message read failed with error:" << endl
+			  << "\t"                                 << e.value()   << endl
+			  << "\t"                                 << e.message() << endl;
+
 		// ERR OUT, so shut down
 		TCPsocket.close();
 
@@ -217,7 +244,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	//
 	// Due to errors in C++11 EMCAregex, the ^ and $ assertions
 	// fail to properly function here.  Thus, we kept the \n on the
-	// end of the std::string to create a functionally equivalent line.  
+	// end of the string to create a functionally equivalent regex.  
 	// This could be fixed in C++17 with the multiline flag but,
 	// as I already decided to stick with '11, we'll just deal with it.
 	//
@@ -229,22 +256,19 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	// [4] - Parameters
 	// [5] - Optional final parameter
 	const static std::regex IRCLine
-		(R"Delim((?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +([^\n\r]+?)(?!:))?(?: :([^\n\r]+))?\r\n)Delim", 
+	(R"Delim((?:@(\S+) +)?(?::(\S+) +)?(\S+)(?: +([^\n\r]+?)(?!:))?(?: :([^\n\r]+))?\r\n)Delim", 
 		 std::regex_constants::ECMAScript | std::regex_constants::optimize);	
 	
 	// test the regex against the recieved line
 	std::smatch sm;
 	if (!std::regex_match(line, sm, IRCLine))
 	{
-		// we didn't match the line, so we discard it
-		cout << "DISCARDED LINE: " << line;
-		// TODO LOG FAILED PARSINGS
+		log  << "Failed to parse IRC message: " << endl
+			 << "\t"                            << line << endl;
 	}
 	else // we have a good line
 	{
-		// TODO fix logging here
-		cout << "GOOD LINE: " << sm[0];
-		cout << "Separated: " << sm[1]  << " | " << sm[2] << " | " << sm[3] << " | " << sm[4] << " | " << sm[5] << endl;
+		log << "IRC " << sm[3] << " RECIEVED" << sm[0]; // has an endline
 
 		// to handle commands, we use the IRC Correlator to find the proper function
 		auto iter = IRC.SFM.find(sm[3].str());
@@ -252,24 +276,24 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 		// if we can't find the command
 		if (iter == IRC.SFM.end())
 		{
-			// TODO - log failed IRC command
+			log << "\tNo command found" << endl;
 		}
 		else //else, we got our response
 		{
+			log << "\tCommand found" << endl;
 			// call the function related to the command
 			if (!iter->second(sm, this))
 			{
-				// TODO - log failure
+				log << "\tCommand returned false" << endl;
 			}
 			else
 			{
-				// TODO - log success and result
-
+				log << "\tCommand returned nominally" << endl;
 			}
 		}
 	}
 
-	// rebinds handler	
+	// rebinds handler
 	asio::async_read_until(TCPsocket, inBuffer, '\n', 
 			asio::bind_executor(_Strand,
 				[this](const asio::error_code &e, size_t size)
@@ -286,27 +310,30 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 // the TCP socket (and properly logs it)
 void Twitch::IRCBot::write(const std::string messageString)
 {
-	std::cout << "***WRITING MESSAGE: " << messageString << std::endl;
+	log  << "WRITING MESSAGE TO SOCKET: " << endl
+		 << "\t"                          << messageString << endl;
 
 	// the buffer needs a string which is gaurenteed to be in scope, so
 	// we re-allocate on the heap as a string
 	//
-	// we also add proper line termination here
+	// we also add proper line termination here to ensure it is only one place
 	std::string *message = new std::string(messageString + "\r\n");
 	
 	// queues up write with a simple handler to write to logs and clean up
 	asio::async_write(TCPsocket, asio::buffer(*message),
 			asio::bind_executor(_Strand,
-				[message](const asio::error_code &e, size_t size)
+				[this, message](const asio::error_code &e, size_t size)
 				{
 					if (e)
 					{
-						// TODO - log error
+						log    << "Standard write failed with error:" << endl
+							   << "\t"                                << e.value()   << endl
+							   << "\t"                                << e.message() << endl;
 					}
 
 					// TODO - log message
 
-					// as message is out of scope, we can delete it
+					// as message is now used, we can delete it
 					delete message;
 				}
 			));

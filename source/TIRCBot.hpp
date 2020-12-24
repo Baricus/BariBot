@@ -8,6 +8,7 @@
 #ifndef TWITCH_TIRCBOT
 #define TWITCH_TIRCBOT
 
+// used for directory systems
 #include <Poco/Path.h>
 
 #include <cstdlib>
@@ -19,6 +20,7 @@
 // for smatch
 #include <regex>
 
+// asio main header
 #include <asio.hpp>
 
 // tokens
@@ -35,6 +37,7 @@ namespace Twitch
 	class IRCBot
 	{
 		private:
+			//--------------------------------------------------------
 			// Socket and other network objects
 		
 			// io context refference
@@ -49,7 +52,7 @@ namespace Twitch
 			// resolver
 			asio::ip::tcp::resolver IPresolver;
 
-			//basic stream socket Pointer
+			//basic stream socket
 			asio::ip::tcp::socket TCPsocket;
 
 			//ASIO error system
@@ -61,7 +64,7 @@ namespace Twitch
 			<std::string::value_type, std::string::traits_type, std::string::allocator_type>
 				inBuffer;
 
-
+			//--------------------------------------------------------
 			// All non-network related members
 
 			// token file reference for thrown error

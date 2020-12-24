@@ -190,17 +190,18 @@ void Twitch::Overseer::_runContext()
 					{
 						input.close();
 
-						//clear file
-						expiredToken.remove();
-						expiredToken.createFile();
-
-						std::ofstream output(expiredToken.path().c_str());
+						std::ofstream output(expiredToken.path().c_str(), std::ofstream::trunc);
 
 						output << temp;
 						output.close();
 
+						// gets new path to the client
+						auto clientPath = e.TokenPath;
+						clientPath.popFrontDirectory();
+						auto clientFile = Poco::File(clientPath);
+
 						// create a new client
-						launchClientInstance(expiredToken, Server, Port);
+						launchClientInstance(clientFile, Server, Port);
 					}
 				}
 			}
@@ -602,7 +603,7 @@ void Twitch::Overseer::deleteToken(int index)
  * 			- likely one extra thread dedicated to launching clients
  */
 void Twitch::Overseer::launchClientInstance(
-		Poco::File &clientDir, 
+		Poco::File &clientFile, 
 		std::string server,
 		std::string port
 		)
@@ -612,7 +613,7 @@ void Twitch::Overseer::launchClientInstance(
 			new Twitch::IRCBot(Context, server, port, 
 							   MasterIRCCorrelator, 
 							   MasterCommandCorrelator,
-							   clientDir.path()));
+							   clientFile.path()));
 }
 
 
