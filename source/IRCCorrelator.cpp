@@ -59,10 +59,9 @@ Twitch::IRCCorrelator::IRCCorrelator()
 		if (Sm[5].str() == "Login authentication failed") // need to restart
 		{
 			// creates proper token path
-			auto tokPath = Poco::Path(Caller->Path);
-			tokPath.append("token.tok");
+			auto cPath = Poco::Path(Caller->Path);
 			
-			throw loginException("AUTH FAILED", Caller, tokPath);
+			throw loginException("IRCCorrelator: AUTH FAILED", Caller, cPath);
 		}
 
 		return true;

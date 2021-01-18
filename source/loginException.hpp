@@ -20,9 +20,9 @@ namespace Twitch
 	struct loginException : std::runtime_error
 	{
 		const Twitch::IRCBot *Caller;
-		const Poco::Path TokenPath;
+		const Poco::Path ClientPath;
 
-		loginException(const char* message, const Twitch::IRCBot *Caller, const Poco::Path TokenPath) : runtime_error(message), TokenPath(TokenPath)
+		loginException(const char* message, const Twitch::IRCBot *Caller, const Poco::Path ClientPath) : runtime_error(message), ClientPath(ClientPath)
 		{
 			this->Caller = Caller;
 		}

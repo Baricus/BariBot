@@ -24,13 +24,18 @@ Twitch::CommandCorrelator::CommandCorrelator()
 	// [3] - Command (all caps or number if correct form; this is more general)
 	// [4] - Parameters
 	// [5] - Optional final parameter
+	//
+	// Note that for PRIVMSG IRC Commands (currently all commands)
+	// the 4'th smatch group (parameters) is just the channel.  
+	// Thus, we can use that to write to the channel that sent the
+	// message
 
 
 	SFM["test"] = [](const std::smatch &IRCsm, 
 					 const std::smatch &Commandsm, 
 					 Twitch::IRCBot *Caller) -> bool 
 	{
-		Caller->write("PRIVMSG #baricus :This is a test");
+		Caller->write("PRIVMSG " +  IRCsm[4].str() + " :This is a test");
 
 		return true;
 	};
@@ -39,7 +44,7 @@ Twitch::CommandCorrelator::CommandCorrelator()
 					 const std::smatch &Commandsm, 
 					 Twitch::IRCBot *Caller) -> bool 
 	{
-		Caller->write("PRIVMSG #baricus :" + Commandsm[2].str());
+		Caller->write("PRIVMSG " +  IRCsm[4].str() + " :" + Commandsm[2].str());
 
 		return true;
 	};
@@ -48,7 +53,7 @@ Twitch::CommandCorrelator::CommandCorrelator()
 						const std::smatch &Commandsm, 
 						Twitch::IRCBot *Caller) -> bool 
 	{
-		Caller->write("PRIVMSG #baricus :" + Commandsm[2].str() + " is pretty cool");
+		Caller->write("PRIVMSG " +  IRCsm[4].str() + " :" + Commandsm[2].str() + " is pretty cool");
 
 		return true;
 	};
@@ -72,7 +77,8 @@ Twitch::CommandCorrelator::CommandCorrelator()
 		else
 		{
 			// timeout's user for one second
-			Caller->write("@ban-duration=1 :tmi.twitch.tv CLEARCHAT #baricus :" + prefixMatch[1].str());
+			Caller->write("@ban-duration=1 :tmi.twitch.tv CLEARCHAT #baricus :"
+					+ prefixMatch[1].str());
 
 			return true;
 		}

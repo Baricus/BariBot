@@ -44,6 +44,7 @@
  *
  * and sets up filesystem
  *
+ * TODO setup configurable directories
  */
 Twitch::Overseer::Overseer() : work(make_work_guard(Context))
 {
@@ -162,11 +163,14 @@ void Twitch::Overseer::_runContext()
 		// handles login exceptions by reneweing the token and re-creating client
 		catch(const loginException &e)
 		{
-			// opens the token and renews
-			Poco::File expiredToken(e.TokenPath);
+			// opens the token (client path + token.tok" and renews
+			Poco::Path clientPath = e.ClientPath;
+			clientPath.append("token.tok");
+			Poco::File expiredToken(clientPath.toString());
 			if (!expiredToken.isFile())
 			{
-				//TODO - log missing file
+				// TODO - log failure in file
+				std::cout << "ERROR, WRONG PATH: " << clientPath.toString() << std::endl;
 			}
 			else
 			{
@@ -195,13 +199,9 @@ void Twitch::Overseer::_runContext()
 						output << temp;
 						output.close();
 
-						// gets new path to the client
-						auto clientPath = e.TokenPath;
-						clientPath.popFrontDirectory();
-						auto clientFile = Poco::File(clientPath);
-						std::cout << clientFile.path() << std::endl;
 						// create a new client
-						launchClientInstance(clientFile, Server, Port);
+						auto client = Poco::File(e.ClientPath);
+						launchClientInstance(client, Server, Port);
 					}
 				}
 			}
@@ -624,6 +624,14 @@ void Twitch::Overseer::launchClientInstance(
  *
  * All clients use the same logs and other files as convention
  * so we create all of them now just in case.
+ *
+ * The token is a file link, to allow for multiple client instances
+ * to share the same token.  This is needed to ensure that updating
+ * the token of one client will update the same token for all other
+ * clients that use it.  If we do not link these files, the clients
+ * will create competing, valid tokens, which if extreme enough can
+ * invalidate some of the copies.  We use a hard link to ensure the
+ * clients can use the token even after it has been deleted.  
  * 
  */
 bool Twitch::Overseer::createClient(std::istream &in, const Poco::File &token)
@@ -654,7 +662,7 @@ bool Twitch::Overseer::createClient(std::istream &in, const Poco::File &token)
 	// creates a link to the provided token file
 	token.linkTo(folder + "/token.tok", token.LINK_HARD);
 
-	// creates other files (destructed so auto closed)
+	// creates other files (fall out of scope so auto closed)
 
 	std::ofstream 	log(folder + "/log.txt"), 
 				 	disabled(folder + "/disabledCommands.txt"),
