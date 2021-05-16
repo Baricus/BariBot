@@ -30,6 +30,8 @@
 
 #include <regex>
 
+using std::string;
+
 // the constructor which populates the map
 Twitch::IRCCorrelator::IRCCorrelator()
 {
@@ -54,7 +56,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	// to record, but often require no response.  Thus, unless
 	// the message specifically requires a response, we only
 	// record.
-	SFM["NOTICE"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> bool
+	SFM["NOTICE"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> string
 	{
 		if (Sm[5].str() == "Login authentication failed") // need to restart
 		{
@@ -64,7 +66,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 			throw loginException("IRCCorrelator: AUTH FAILED", Caller, cPath);
 		}
 
-		return true;
+		return R"(Command NOTICE recieved)";
 	};
 
 
@@ -72,7 +74,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	//
 	// Ping commands are used to keep connection alive.  
 	// It is simply a request for a matching "pong" response
-	SFM["PING"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> bool
+	SFM["PING"] = [](std::smatch &Sm, Twitch::IRCBot *Caller) -> string
 	{
 		// queues an output
 		Caller->write("PONG :" + Sm[5].str());
@@ -80,7 +82,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 		// temporary write
 		Caller->write("PRIVMSG #baricus :Hi!  This is a Bot (not the streamer, just whats typing) that I'm working on.  I'm currently working on setting up actual commands and I thought I might as well stream it.  ");
 
-		return true;
+		return R"(Command PING recieved)";
 	};
 
 
@@ -89,7 +91,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 	// PRIVMSG is (since this is a client) a message sent to us,
 	// either because it was sent into a channel, or sent directly.
 	//
-	SFM["PRIVMSG"] = [](std::smatch &sm, Twitch::IRCBot *Caller) -> bool
+	SFM["PRIVMSG"] = [](std::smatch &sm, Twitch::IRCBot *Caller) -> string
 	{
 		static const std::regex CommandMatch(R"(!(\w+)\s*(.*))", std::regex_constants::ECMAScript | std::regex_constants::optimize);
 
@@ -106,23 +108,15 @@ Twitch::IRCCorrelator::IRCCorrelator()
 			// if command doesn't exist
 			if (iter == Caller->Commands.SFM.end())
 			{
-				// TODO - decide if I should do something
+				return R"(Command PRIVMSG recieved, no user command found)";
 			}
 			else
 			{
-				//if command returns false
-				if(!iter->second(sm, commandStringMatch, Caller))
-				{
-					// TODO - log
-				}
-				else
-				{
-					// TODO - log
-				}
+				return R"(Command PRIVMSG recieved, )" + 
+					iter->second(sm, commandStringMatch, Caller);
 			}
 		}
 
-		return true;
-
+		return R"(Command PRIVMSG recieved, wrong format)";
 	};
 }

@@ -282,7 +282,7 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 	}
 	else // we have a good line
 	{
-		log << "IRC " << sm[3] << " RECIEVED" << sm[0]; // has an endline
+		log << "IRC " << sm[3] << " RECIEVED" << endl;
 
 		// to handle commands, we use the IRC Correlator to find the proper function
 		auto iter = IRC.SFM.find(sm[3].str());
@@ -290,20 +290,13 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 		// if we can't find the command
 		if (iter == IRC.SFM.end())
 		{
-			log << "\tNo command found" << endl;
+			log << "\tNo command found." << endl;
 		}
 		else //else, we got our response
 		{
-			log << "\tCommand found" << endl;
+			log << "\tCommand found:" << endl;
 			// call the function related to the command
-			if (!iter->second(sm, this))
-			{
-				log << "\tCommand returned false" << endl;
-			}
-			else
-			{
-				log << "\tCommand returned nominally" << endl;
-			}
+			log << "\t\t" << iter->second(sm, this) << endl;
 		}
 	}
 
@@ -324,9 +317,6 @@ void Twitch::IRCBot::_onMessage(const asio::error_code &e, std::size_t size)
 // the TCP socket (and properly logs it)
 void Twitch::IRCBot::write(const std::string messageString)
 {
-	log  << "WRITING MESSAGE TO SOCKET: " << endl
-		 << "\t"                          << messageString << endl;
-
 	// the buffer needs a string which is gaurenteed to be in scope, so
 	// we re-allocate on the heap as a string
 	//

@@ -36,7 +36,7 @@ namespace Twitch
 	class IRCCorrelator
 	{
 		public:
-			std::map<std::string, bool (*)(std::smatch &, Twitch::IRCBot *Caller)> SFM;
+			std::map<std::string, std::string (*)(std::smatch &, Twitch::IRCBot *Caller)> SFM;
 
 			IRCCorrelator(); // constructor to populate map
 	};

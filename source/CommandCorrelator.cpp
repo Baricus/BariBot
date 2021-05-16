@@ -33,34 +33,34 @@ Twitch::CommandCorrelator::CommandCorrelator()
 
 	SFM["test"] = [](const std::smatch &IRCsm, 
 					 const std::smatch &Commandsm, 
-					 Twitch::IRCBot *Caller) -> bool 
+					 Twitch::IRCBot *Caller) -> std::string 
 	{
 		Caller->write("PRIVMSG " +  IRCsm[4].str() + " :This is a test");
 
-		return true;
+		return R"(Command "test" fired)";
 	};
 
 	SFM["echo"] = [](const std::smatch &IRCsm, 
 					 const std::smatch &Commandsm, 
-					 Twitch::IRCBot *Caller) -> bool 
+					 Twitch::IRCBot *Caller) -> std::string 
 	{
 		Caller->write("PRIVMSG " +  IRCsm[4].str() + " :" + Commandsm[2].str());
 
-		return true;
+		return R"(Command "echo" fired, echoed: )" + Commandsm[2].str();
 	};
 
 	SFM["endorse"] = [](const std::smatch &IRCsm, 
 						const std::smatch &Commandsm, 
-						Twitch::IRCBot *Caller) -> bool 
+						Twitch::IRCBot *Caller) -> std::string 
 	{
 		Caller->write("PRIVMSG " +  IRCsm[4].str() + " :" + Commandsm[2].str() + " is pretty cool");
 
-		return true;
+		return R"(Command "endorse" fired, endorsed: )" + Commandsm[2].str();
 	};
 
 	SFM["purge"] = [](const std::smatch &IRCsm,
 					  const std::smatch &Commandsm,
-					  Twitch::IRCBot *Caller) -> bool
+					  Twitch::IRCBot *Caller) -> std::string
 	{
 		// grab the prefix to grab the username
 		auto prefix = IRCsm[2].str();
@@ -72,7 +72,9 @@ Twitch::CommandCorrelator::CommandCorrelator()
 		// tests prefix to grab username
 		if (!std::regex_match(prefix, prefixMatch, getUsername))
 		{
-			return false;
+			Caller->write("PRIVMSG " + IRCsm[4].str() + " :" + "Cound not find user");
+
+			return R"(Command "purge" could not find the user to purge)";
 		}
 		else
 		{
@@ -80,7 +82,7 @@ Twitch::CommandCorrelator::CommandCorrelator()
 			Caller->write("@ban-duration=1 :tmi.twitch.tv CLEARCHAT #baricus :"
 					+ prefixMatch[1].str());
 
-			return true;
+			return R"(Command "purge" succesfully purged a user from the chat)";
 		}
 	};
 

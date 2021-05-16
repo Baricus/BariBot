@@ -40,7 +40,7 @@ namespace Twitch
 	{
 		public:
 			// should I use the same approach?	
-			std::map<std::string, bool (*)(const std::smatch &, const std::smatch &, Twitch::IRCBot *Caller)> SFM;
+			std::map<std::string, std::string (*)(const std::smatch &, const std::smatch &, Twitch::IRCBot *Caller)> SFM;
 
 		public:
 			CommandCorrelator();
