@@ -27,6 +27,7 @@
 #include <map>		//...map
 #include <string>	//...string
 #include <regex> 	//smatch
+#include <functional>
 
 namespace Twitch
 {
@@ -36,7 +37,7 @@ namespace Twitch
 	class IRCCorrelator
 	{
 		public:
-			std::map<std::string, std::string (*)(std::smatch &, Twitch::IRCBot *Caller)> SFM;
+			std::map<std::string, std::function<std::string(std::smatch &, Twitch::IRCBot *Caller)>> SFM;
 
 			IRCCorrelator(); // constructor to populate map
 	};

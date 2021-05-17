@@ -31,6 +31,7 @@ Twitch::CommandCorrelator::CommandCorrelator()
 	// message
 
 
+	// test simply is a command to ensure the bot is online
 	SFM["test"] = [](const std::smatch &IRCsm, 
 					 const std::smatch &Commandsm, 
 					 Twitch::IRCBot *Caller) -> std::string 
@@ -40,6 +41,7 @@ Twitch::CommandCorrelator::CommandCorrelator()
 		return R"(Command "test" fired)";
 	};
 
+	// echo repeats whatever the user provided in the arguments
 	SFM["echo"] = [](const std::smatch &IRCsm, 
 					 const std::smatch &Commandsm, 
 					 Twitch::IRCBot *Caller) -> std::string 
@@ -49,6 +51,7 @@ Twitch::CommandCorrelator::CommandCorrelator()
 		return R"(Command "echo" fired, echoed: )" + Commandsm[2].str();
 	};
 
+	// endorse says that a user is pretty cool
 	SFM["endorse"] = [](const std::smatch &IRCsm, 
 						const std::smatch &Commandsm, 
 						Twitch::IRCBot *Caller) -> std::string 
@@ -58,6 +61,8 @@ Twitch::CommandCorrelator::CommandCorrelator()
 		return R"(Command "endorse" fired, endorsed: )" + Commandsm[2].str();
 	};
 
+	// purge deletes all messages by a user in the chat
+	// it currently does not work
 	SFM["purge"] = [](const std::smatch &IRCsm,
 					  const std::smatch &Commandsm,
 					  Twitch::IRCBot *Caller) -> std::string
@@ -86,5 +91,46 @@ Twitch::CommandCorrelator::CommandCorrelator()
 		}
 	};
 
+	// QUEUE commands
+	
+	// starts a queue with a given name
+	SFM["startQ"] = [this](const std::smatch &IRCsm,
+					  const std::smatch &Commandsm,
+					  Twitch::IRCBot *Caller) -> std::string
+	{
+		// ensures we have a name
+		if (Commandsm[2].str() == "")
+		{
+			Caller->write("PRIVMSG" + IRCsm[4].str() + ":Specify a queue name");
 
+			return R"(Command startQ did not create a queue: "" attempted as name)";
+		}
+
+		// creates it
+		Queues[Commandsm[2].str()];
+		Caller->write("PRIVMSG " + IRCsm[4].str()    + " :"
+				                 + "Created Queue: " + Commandsm[2].str());
+
+		return R"(Command "startQ" created queue: )" + Commandsm[2].str();
+	};
+
+	// lists all active queues
+	SFM["listQ"] = [this](const std::smatch &IRCsm,
+					  const std::smatch &Commandsm,
+					  Twitch::IRCBot *Caller) -> std::string
+	{
+		if (Queues.size() == 0)
+		{
+			Caller->write("PRIVMSG" + IRCsm[4].str() + ":There are no queues");
+			return R"(Command listQ had no queues to list)";
+		}
+
+		Caller->write("PRIVMSG" + IRCsm[4].str() + ":Queues:");
+		for (const auto &q : Queues)
+		{
+			Caller->write("PIRVMSG" + IRCsm[4].str() + ":" + q.first);
+		}
+
+		return R"(Command "listQ" ran succesfully)";
+	};
 }

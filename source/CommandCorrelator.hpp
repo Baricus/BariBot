@@ -29,8 +29,10 @@
 
 #include <set>
 #include <map>
+#include <queue>
 #include <regex>
 #include <string>
+#include <functional>
 
 namespace Twitch
 {
@@ -39,11 +41,14 @@ namespace Twitch
 	class CommandCorrelator
 	{
 		public:
-			// should I use the same approach?	
-			std::map<std::string, std::string (*)(const std::smatch &, const std::smatch &, Twitch::IRCBot *Caller)> SFM;
+			std::map<std::string, std::function<std::string(const std::smatch &, const std::smatch &, Twitch::IRCBot *Caller)>> SFM;
+
 
 		public:
 			CommandCorrelator();
+
+		private:
+			std::map<std::string, std::queue<std::string>> Queues;
 	};
 }
 #endif
