@@ -66,7 +66,7 @@ Twitch::IRCCorrelator::IRCCorrelator()
 			throw loginException("IRCCorrelator: AUTH FAILED", Caller, cPath);
 		}
 
-		return R"(Command NOTICE recieved)";
+		return R"(Command NOTICE recieved, with message: )" + Sm[5].str();
 	};
 
 
@@ -108,10 +108,11 @@ Twitch::IRCCorrelator::IRCCorrelator()
 			// if command doesn't exist
 			if (iter == Caller->Commands.SFM.end())
 			{
-				return R"(Command PRIVMSG recieved, no user command found)";
+				return R"(Command PRIVMSG recieved, no user command found for: )" + message;
 			}
 			else
 			{
+				// run the function to handle this command in the correlator
 				return R"(Command PRIVMSG recieved, )" + 
 					iter->second(sm, commandStringMatch, Caller);
 			}

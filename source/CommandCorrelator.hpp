@@ -33,6 +33,7 @@
 #include <regex>
 #include <string>
 #include <functional>
+#include <utility>
 
 namespace Twitch
 {
@@ -41,14 +42,26 @@ namespace Twitch
 	class CommandCorrelator
 	{
 		public:
-			std::map<std::string, std::function<std::string(const std::smatch &, const std::smatch &, Twitch::IRCBot *Caller)>> SFM;
-
+			std::map<
+				std::string, 
+				std::function<std::string(const std::smatch &, const std::smatch &, Twitch::IRCBot *Caller)>> 
+					SFM;
 
 		public:
 			CommandCorrelator();
 
 		private:
-			std::map<std::string, std::queue<std::string>> Queues;
+			struct QueueStruct 
+			{
+				std::string Creator;
+				std::set<std::string> Members;
+				std::deque<std::string> Queue;
+			};
+			std::map<std::string, QueueStruct> Queues;
+
+			// builder functions to populate SFM
+			void misc();
+			void queue();
 	};
 }
 #endif

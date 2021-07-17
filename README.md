@@ -13,9 +13,9 @@ BariBot is, as of the current moment, techincally functional.  It connects to a 
   - [X] Open a TCP socket to a given server+port
   - [X] Handle connection failures with fallof retries
   - [X] Parse incoming IRC commands
-  - [ ] Process IRC commands
+  - [X] Process IRC commands (very limited scope)
   - [X] Generate outbound IRC commands
-  - [ ] Connect to the requested IRC channels
+  - [X] Connect to the requested IRC channels
   - [X] Properly authenticate with Twitch servers
   - [X] Maintain connection with Twitch servers (ping pong)
   - [X] Handle user commands
